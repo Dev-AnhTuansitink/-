@@ -1,157 +1,180 @@
-local Modules = getgenv().Modules or {}
-Modules.Players = game:GetService("Players")
-Modules.ReplicatedStorage = game:GetService("ReplicatedStorage")
+-- ============================================
+-- SUPER FAST ATTACK BYPASS (Night Hub style)
+-- ============================================
 
-local Settings = getgenv().Settings or {
-    ["Attack Mobs"] = true,
-    ["Attack Players"] = true,
+-- Khởi tạo global environment để tương thích
+getgenv().SuperFastAttack = getgenv().SuperFastAttack or {}
+
+local SFA = getgenv().SuperFastAttack
+
+-- Đảm bảo Modules tồn tại
+SFA.Modules = SFA.Modules or {}
+SFA.Modules.Players = game:GetService("Players")
+SFA.Modules.ReplicatedStorage = game:GetService("ReplicatedStorage")
+SFA.Modules.RunService = game:GetService("RunService")
+
+-- Settings (có thể chỉnh sau)
+SFA.Settings = SFA.Settings or {
+    AttackMobs = true,
+    AttackPlayers = false,
+    AttackRange = 80,
+    FastAttack = true,
 }
 
-local BringMob = getgenv().BringMob or false
-local BringMobName = getgenv().BringMobName or nil
+-- Biến trạng thái
+SFA.BringMob = false
+SFA.BringMobFunction = nil  -- Hàm kéo mob nếu có
+SFA.FakeId = ""
+SFA.HitsFunction = nil
+SFA.FastAttackFlag = true
 
-local FakeId = ""
+-- Tạo FakeId đồng bộ
+do
+    local userId = SFA.Modules.Players.LocalPlayer.UserId
+    local threadId = string.sub(tostring(coroutine.running()), -5)
+    SFA.FakeId = tostring(userId):sub(2, 4) .. threadId
+end
+
+-- Lấy Hits_Function từ PlayerScripts (có timeout)
 task.spawn(function()
-    local threadStr = tostring(coroutine.running())
-    local threadId = string.sub(threadStr, -5) 
-    FakeId = tostring(Modules.Players.LocalPlayer.UserId):sub(2, 4) .. threadId
-end)
-
-local Hits_Function
-local PlayerScripts = Modules.Players.LocalPlayer:WaitForChild("PlayerScripts")
-
-task.spawn(function()
-    if PlayerScripts then
-        local LocalScript = PlayerScripts:FindFirstChildOfClass("LocalScript")
-        local timeout = 0
-        while not LocalScript and timeout < 50 do
-            task.wait(0.1)
-            timeout = timeout + 1
-            LocalScript = PlayerScripts:FindFirstChildOfClass("LocalScript")
+    local playerScripts = SFA.Modules.Players.LocalPlayer:WaitForChild("PlayerScripts")
+    local localScript = playerScripts:FindFirstChildOfClass("LocalScript")
+    local timeout = 0
+    while not localScript and timeout < 50 do
+        task.wait(0.1)
+        timeout = timeout + 1
+        localScript = playerScripts:FindFirstChildOfClass("LocalScript")
+    end
+    if localScript and getsenv then
+        local success, env = pcall(getsenv, localScript)
+        if success and env and env._G then
+            SFA.HitsFunction = env._G.SendHitsToServer
         end
-        
-        if LocalScript and getsenv then
-            local success, env = pcall(getsenv, LocalScript)
-            if success and env and env._G then
-                Hits_Function = env._G.SendHitsToServer
-            end
-        end
+    end
+    if SFA.HitsFunction then
+        print("[SFA] Got Hits Function")
+    else
+        print("[SFA] Using fallback remote")
     end
 end)
 
-local waitHitTimeout = 0
-while not Hits_Function and waitHitTimeout < 50 do
-    task.wait(0.1)
-    waitHitTimeout = waitHitTimeout + 1
-end
-
-if Hits_Function then
-    print("Get Hit Function Success")
-else
-    print("Warning: Could not get SendHitsToServer. Falling back to default remote.")
-end
-
-local Flag_FastAttack = true
-local success, COMBAT_REMOTE_THREAD = pcall(function()
-    return require(Modules.ReplicatedStorage.Modules:WaitForChild("Flags")).COMBAT_REMOTE_THREAD
+-- Xác định flag fast attack từ game
+local success, flag = pcall(function()
+    return require(SFA.Modules.ReplicatedStorage.Modules:WaitForChild("Flags")).COMBAT_REMOTE_THREAD
 end)
 if success then
-    Flag_FastAttack = COMBAT_REMOTE_THREAD or true
+    SFA.FastAttackFlag = flag or true
 end
 
-function Modules:IsAlive(v)
-    return v and v.Parent and not v:FindFirstChild("VehicleSeat") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 and v:FindFirstChild("HumanoidRootPart")
+-- Hàm kiểm tra alive
+function SFA:IsAlive(instance)
+    return instance and instance.Parent 
+        and instance:FindFirstChild("Humanoid") 
+        and instance.Humanoid.Health > 0 
+        and instance:FindFirstChild("HumanoidRootPart")
+        and not instance:FindFirstChild("VehicleSeat")
 end
 
-function Modules:GetDistance(targetPosition)
-    local localRoot = Modules.Players.LocalPlayer.Character and Modules.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    if localRoot then
-        return (localRoot.Position - targetPosition).Magnitude
+-- Hàm lấy khoảng cách
+function SFA:GetDistance(pos)
+    local root = SFA.Modules.Players.LocalPlayer.Character 
+        and SFA.Modules.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if root then
+        return (root.Position - pos).Magnitude
     end
     return math.huge
 end
 
-function Modules:GetBladeHits(RANGE)
-    local BLADE_HITS = {}
-    RANGE = RANGE or 80
-    
-    if Settings["Attack Mobs"] then
+-- Hàm lấy danh sách mục tiêu
+function SFA:GetTargets()
+    local targets = {}
+    local range = SFA.Settings.AttackRange
+    if SFA.Settings.AttackMobs then
         for _, v in ipairs(workspace.Enemies:GetChildren()) do
-            if v:IsA("Model") and self:IsAlive(v) and self:GetDistance(v.HumanoidRootPart.Position) <= RANGE then
-                table.insert(BLADE_HITS, v)
+            if v:IsA("Model") and self:IsAlive(v) and self:GetDistance(v.HumanoidRootPart.Position) <= range then
+                table.insert(targets, v)
             end
         end
     end
-    
-    if Settings["Attack Players"] then
+    if SFA.Settings.AttackPlayers then
         for _, v in ipairs(workspace.Characters:GetChildren()) do
-            if v.Name ~= Modules.Players.LocalPlayer.Name and v:IsA("Model") and self:IsAlive(v) and self:GetDistance(v.HumanoidRootPart.Position) <= RANGE then
-                table.insert(BLADE_HITS, v)
+            if v.Name ~= SFA.Modules.Players.LocalPlayer.Name 
+                and v:IsA("Model") and self:IsAlive(v) 
+                and self:GetDistance(v.HumanoidRootPart.Position) <= range then
+                table.insert(targets, v)
             end
         end
     end
-    return BLADE_HITS
+    return targets
 end
 
-function Modules:StartAttack()
-    if getgenv().SingleAttack then return end
-    
-    local character = Modules.Players.LocalPlayer.Character
+-- Hàm tấn công siêu nhanh
+function SFA:FastAttack()
+    local character = SFA.Modules.Players.LocalPlayer.Character
     if not character then return end
-    
-    local BladeHits = self:GetBladeHits()
-    local EnemyList = {}
-    
-    if #BladeHits > 0 then
-        local CurrentTool = character:FindFirstChildOfClass("Tool")
-        if not CurrentTool then return end
-        
-        if CurrentTool.ToolTip == "Blox Fruit" then
-            local left = CurrentTool:FindFirstChild("LeftClickRemote")
-            if left and left:IsA("RemoteEvent") then
-                left:FireServer(Vector3.new(0, -500, 0), math.random(1, 3), true)
-                task.wait(0.01)
-                left:FireServer(false)
-            end
-        else
-            for _, mob in ipairs(BladeHits) do
-                if self:IsAlive(mob) and mob:FindFirstChild("Head") then
-                    table.insert(EnemyList, {mob, mob.Head})
-                end
-            end
-            
-            if #EnemyList > 0 then
-                local EnemyHit = EnemyList[1][2]
-                local net = Modules.ReplicatedStorage.Modules:FindFirstChild("Net")
-                if net then
-                    local registerAttack = net:FindFirstChild("RE/RegisterAttack")
-                    local registerHit = net:FindFirstChild("RE/RegisterHit")
-                    
-                    if registerAttack then registerAttack:FireServer(0) end
-                    
-                    if Flag_FastAttack and Hits_Function then
-                        Hits_Function(EnemyHit, EnemyList, nil, FakeId)
-                    elseif registerHit then
-                        registerHit:FireServer(EnemyHit, EnemyList, nil, FakeId)
-                    end
-                end
-            end
+
+    local targets = self:GetTargets()
+    if #targets == 0 then return end
+
+    local tool = character:FindFirstChildOfClass("Tool")
+    if not tool then return end
+
+    -- Nếu là trái ác quỷ, dùng LeftClickRemote
+    if tool.ToolTip == "Blox Fruit" then
+        local leftClick = tool:FindFirstChild("LeftClickRemote")
+        if leftClick and leftClick:IsA("RemoteEvent") then
+            leftClick:FireServer(Vector3.new(0, -500, 0), math.random(1, 3), true)
+            task.wait(0.01)
+            leftClick:FireServer(false)
+        end
+        return
+    end
+
+    -- Tạo danh sách enemy cho hits function
+    local enemyList = {}
+    for _, mob in ipairs(targets) do
+        if self:IsAlive(mob) and mob:FindFirstChild("Head") then
+            table.insert(enemyList, {mob, mob.Head})
+        end
+    end
+    if #enemyList == 0 then return end
+
+    local enemyHit = enemyList[1][2] -- head của mob đầu tiên
+    local net = SFA.Modules.ReplicatedStorage.Modules:FindFirstChild("Net")
+    if not net then return end
+
+    -- Gửi RegisterAttack (cần cho cả hai phương thức)
+    local registerAttack = net:FindFirstChild("RE/RegisterAttack")
+    if registerAttack then
+        registerAttack:FireServer(0)
+    end
+
+    -- Sử dụng HitsFunction nếu có và được bật
+    if SFA.Settings.FastAttack and SFA.HitsFunction then
+        pcall(SFA.HitsFunction, enemyHit, enemyList, nil, SFA.FakeId)
+    else
+        local registerHit = net:FindFirstChild("RE/RegisterHit")
+        if registerHit then
+            registerHit:FireServer(enemyHit, enemyList, nil, SFA.FakeId)
         end
     end
 end
 
-task.spawn(function()
-    while task.wait() do
-        pcall(function()
-            if getgenv().BringMob then
-                if sethiddenproperty then
-                    sethiddenproperty(Modules.Players.LocalPlayer, "SimulationRadius", 3150)
-                end
-                if type(Modules.BringMob) == "function" then
-                    Modules:BringMob()
-                end
+-- Vòng lặp chính (dùng RunService.Heartbeat để tấn công nhanh nhất có thể)
+SFA.Connection = SFA.Modules.RunService.Heartbeat:Connect(function()
+    pcall(function()
+        if SFA.BringMob and type(SFA.BringMobFunction) == "function" then
+            -- Có thể kích hoạt simulation radius
+            if sethiddenproperty then
+                sethiddenproperty(SFA.Modules.Players.LocalPlayer, "SimulationRadius", 3150)
             end
-            Modules:StartAttack()
-        end)
-    end
+            SFA:BringMobFunction()
+        end
+        SFA:FastAttack()
+    end)
 end)
+
+print("[SFA] Super Fast Attack loaded. FakeId:", SFA.FakeId)
+
+-- Hàm dừng (có thể gọi khi cần)
+-- SFA.Connection:Disconnect()
