@@ -56,7 +56,7 @@ local success, COMBAT_REMOTE_THREAD = pcall(function()
     return require(Modules.ReplicatedStorage.Modules:WaitForChild("Flags")).COMBAT_REMOTE_THREAD
 end)
 if success then
-    Flag_FastAttack = COMBAT_REMOTE_THREAD or false
+    Flag_FastAttack = COMBAT_REMOTE_THREAD or true
 end
 
 function Modules:IsAlive(v)
@@ -73,7 +73,7 @@ end
 
 function Modules:GetBladeHits(RANGE)
     local BLADE_HITS = {}
-    RANGE = RANGE or 67
+    RANGE = RANGE or 80
     
     if Settings["Attack Mobs"] then
         for _, v in ipairs(workspace.Enemies:GetChildren()) do
