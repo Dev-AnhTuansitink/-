@@ -1,256 +1,360 @@
+--[[
+    ULTIMATE BLOX FRUITS PVP V8 - FULL FINAL
+    Features:
+    1. Auto Enable PvP (Fix)
+    2. GUI Skip Button (Restored)
+    3. Auto Skip Safe Zone Notification
+    4. Smart Retreat & Orbit
+]]
+
 local Players = game:GetService("Players")
-local VirtualInputManager = game:GetService("VirtualInputManager")
-local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
-local StarterGui = game:GetService("StarterGui")
-local Workspace = game:GetService("Workspace")
+local TweenService = game:GetService("TweenService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local CoreGui = game:GetService("CoreGui")
+local Stats = game:GetService("Stats")
 
 local player = Players.LocalPlayer
-local camera = Workspace.CurrentCamera
+local camera = workspace.CurrentCamera
 
 -- ==========================================
---               CẤU HÌNH (SETTINGS)
+--              CẤU HÌNH (SETTINGS)
 -- ==========================================
 local Settings = {
-    Attacking = true,           -- Bật/Tắt Script
+    Enable = true,
     
-    -- [Di chuyển & Né]
-    TweenSpeed = 350,           -- Tốc độ bay (300-350 là ổn)
-    Distance = 4,               -- Khoảng cách giữ với địch
-    AutoDodgeSkill = true,      -- Tự bật Haki Quan Sát (Key E)
+    -- [System]
+    AutoEnablePvP = true,       -- Tự động bật PvP
+    SkipOnNotification = true,  -- Skip khi thấy thông báo Safe Zone
+    TeamCheck = true,
+    IgnoreMarines = true,
+
+    -- [Movement]
+    TweenSpeed = 350,
+    Height = 15,                
+    HoldDistance = 15,          
+    OrbitMode = true,           
+    OrbitSpeed = 2,             
+
+    -- [Safe Retreat]
+    LowHealthRetreat = true,    
+    LowHP = 30,                 
+    SafeHP = 70,                
+    RetreatHeight = 2000,       
     
-    -- [Bộ lọc mục tiêu]
-    TeamCheck = true,           -- Bật: Không đánh đồng đội
-    IgnoreMarines = true,       -- Bật: Bỏ qua phe Marine (Nếu bạn là Hải Tặc)
-    CheckSafeZone = true,       -- Bật: Bỏ qua người có ForceField (SafeZone/PvP Off)
+    -- [Skip Logic]
+    OneKillPerPlayer = true,    
+    NoDamageTimeout = 15,       
     
-    -- [Fix Sus Bounty]
-    AvoidSusKill = true,        -- Bật: Không đánh lại người vừa giết ngay lập tức
-    SusCooldown = 600,          -- Thời gian chờ (Giây). 600s = 10 phút.
-    
-    -- [Auto Buff]
-    AutoHaki = true,            -- Key J
-    AutoV3 = true,              -- Key T
-    AutoV4 = true,              -- Key Y
+    -- [Smart Moves]
+    SmartDash = true,           
+    SmartJump = true,           
+    SmartSoru = true,           
 }
 
--- Danh sách đen tạm thời (Lưu tên người vừa giết)
+-- Variables
+local CurrentTarget = nil
 local Blacklist = {} 
-
-function getChar()
-    return player.Character or player.CharacterAdded:Wait()
-end
-
-function getRoot()
-    local char = getChar()
-    return char:WaitForChild("HumanoidRootPart", 10)
-end
+local IsRetreating = false
+local LastDamageTime = 0
+local EnemyLastHealth = 0
+local ToolIndex = 1
+local LastBuffTime = 0
+local LastToolSwitch = 0
+local LastUIScan = 0
 
 -- ==========================================
---           HÀM CHECK SUS / SAFE ZONE
+--        FEATURE 8: NÚT SKIP GUI
 -- ==========================================
-function isPlayerIgnored(pName)
-    if not Settings.AvoidSusKill then return false end
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Parent = CoreGui
+ScreenGui.Name = "AutoPvpV8"
+
+local SkipBtn = Instance.new("TextButton")
+SkipBtn.Parent = ScreenGui
+SkipBtn.Size = UDim2.new(0, 150, 0, 50)
+SkipBtn.Position = UDim2.new(0.5, -75, 0.15, 0) -- Giữa trên màn hình
+SkipBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+SkipBtn.Text = "SKIP TARGET"
+SkipBtn.TextColor3 = Color3.new(1,1,1)
+SkipBtn.Font = Enum.Font.GothamBold
+SkipBtn.TextSize = 16
+SkipBtn.Visible = false
+SkipBtn.BorderSizePixel = 2
+
+SkipBtn.MouseButton1Click:Connect(function()
+    if CurrentTarget then
+        Blacklist[CurrentTarget.Name] = tick()
+        CurrentTarget = nil
+        SkipBtn.Visible = false
+        print("Đã Skip mục tiêu thủ công!")
+    end
+end)
+
+-- ==========================================
+--        AUTO ENABLE PVP (THREAD RIÊNG)
+-- ==========================================
+task.spawn(function()
+    while true do
+        task.wait(2)
+        if Settings.Enable and Settings.AutoEnablePvP then
+            pcall(function()
+                local gui = player:FindFirstChild("PlayerGui")
+                if gui then
+                    for _, v in pairs(gui:GetDescendants()) do
+                        if v:IsA("TextButton") or v:IsA("ImageButton") then
+                            local name = string.lower(v.Name)
+                            local text = v:IsA("TextButton") and string.lower(v.Text) or ""
+                            if (string.find(name, "enable") or string.find(text, "enable") or string.find(text, "bật")) and string.find(name, "pvp") then
+                                if v.Visible and v.AbsolutePosition.X > 0 then
+                                    VirtualInputManager:SendMouseButtonEvent(v.AbsolutePosition.X + 10, v.AbsolutePosition.Y + 10, 0, true, game, 0)
+                                    task.wait(0.1)
+                                    VirtualInputManager:SendMouseButtonEvent(v.AbsolutePosition.X + 10, v.AbsolutePosition.Y + 10, 0, false, game, 0)
+                                end
+                            end
+                        end
+                    end
+                end
+            end)
+        end
+    end
+end)
+
+-- ==========================================
+--        UTILS & HELPERS
+-- ==========================================
+function getChar() return player.Character or player.CharacterAdded:Wait() end
+function getRoot() return getChar():WaitForChild("HumanoidRootPart", 10) end
+function getHum() return getChar():WaitForChild("Humanoid", 10) end
+
+function pressKey(key)
+    VirtualInputManager:SendKeyEvent(true, key, false, game)
+    task.wait(0.01)
+    VirtualInputManager:SendKeyEvent(false, key, false, game)
+end
+
+function getAimPosition(targetRoot)
+    local ping = Stats.Network.ServerStatsItem["Data Ping"]:GetValueString()
+    local pingNumber = tonumber(ping:match("%d+")) or 60
+    local prediction = pingNumber / 1000 + 0.045
+    return targetRoot.Position + (targetRoot.Velocity * prediction)
+end
+
+function checkSafeZoneNotification()
+    if not Settings.SkipOnNotification then return false end
+    local playerGui = player:FindFirstChild("PlayerGui")
+    if not playerGui then return false end
     
-    local killTime = Blacklist[pName]
-    if killTime then
-        -- Nếu chưa hết thời gian chờ -> Bỏ qua
-        if (tick() - killTime) < Settings.SusCooldown then
-            return true
-        else
-            -- Hết giờ -> Xóa khỏi list
-            Blacklist[pName] = nil 
-            return false
+    local keywords = {"safe zone", "an toàn", "disabled", "pvp is disabled", "no pvp", "protection"}
+    for _, v in pairs(playerGui:GetDescendants()) do
+        if v:IsA("TextLabel") and v.Visible and v.TextTransparency < 1 then
+            local text = string.lower(v.Text)
+            for _, key in pairs(keywords) do
+                if string.find(text, key) then return true end
+            end
         end
     end
     return false
 end
 
-function getSmartTarget()
-    local bestTarget = nil
-    local shortestDist = math.huge
-    local root = getRoot()
-    if not root then return nil end
-
-    for _, p in pairs(Players:GetPlayers()) do
-        if p ~= player then
-            -- 1. Check Blacklist (Sus Bounty)
-            if not isPlayerIgnored(p.Name) then
-                
-                -- 2. Check Team
-                local isMarine = (p.Team and p.Team.Name == "Marines")
-                local isSameTeam = (player.Team and p.Team and player.Team == p.Team)
-                
-                local passTeamCheck = true
-                if Settings.IgnoreMarines and isMarine then passTeamCheck = false end
-                if Settings.TeamCheck and isSameTeam then passTeamCheck = false end
-
-                if passTeamCheck then
-                    local char = p.Character
-                    if char and char:FindFirstChild("Humanoid") and char:FindFirstChild("HumanoidRootPart") then
-                        local hum = char.Humanoid
-                        
-                        -- 3. Check Safe Zone / ForceField
-                        local isSafe = char:FindFirstChildOfClass("ForceField")
-                        
-                        if hum.Health > 0 and (not Settings.CheckSafeZone or not isSafe) then
-                            local dist = (char.HumanoidRootPart.Position - root.Position).Magnitude
-                            
-                            -- Lấy người gần nhất
-                            if dist < shortestDist then
-                                shortestDist = dist
-                                bestTarget = p 
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end
-    return bestTarget
-end
-
 -- ==========================================
---              HÀM HỖ TRỢ (UTILS)
+--        NOCLIP & ANTI-FALL
 -- ==========================================
-function tweenTo(targetCFrame)
-    local root = getRoot()
-    if not root then return end
-    local dist = (root.Position - targetCFrame.Position).Magnitude
-    
-    if dist < 5 then 
-        root.CFrame = targetCFrame 
-        return 
-    end
-    
-    local tweenInfo = TweenInfo.new(dist / Settings.TweenSpeed, Enum.EasingStyle.Linear)
-    local tween = TweenService:Create(root, tweenInfo, {CFrame = targetCFrame})
-    tween:Play()
-end
-
-function pressKey(key)
-    task.spawn(function()
-        VirtualInputManager:SendKeyEvent(true, key, false, game)
-        task.wait(0.01)
-        VirtualInputManager:SendKeyEvent(false, key, false, game)
-    end)
-end
-
-function equipToolByIndex(index)
-    local tools = {}
-    -- Lấy tool trong Balo
-    if player.Backpack then
-        for _, t in pairs(player.Backpack:GetChildren()) do
-            if t:IsA("Tool") and t:FindFirstChild("Handle") then table.insert(tools, t) end
-        end
-    end
-    -- Lấy tool đang cầm
+RunService.Stepped:Connect(function()
+    if not Settings.Enable then return end
     local char = getChar()
     if char then
-        for _, t in pairs(char:GetChildren()) do 
-            if t:IsA("Tool") then table.insert(tools, t) end 
+        for _, v in pairs(char:GetDescendants()) do
+            if v:IsA("BasePart") and v.CanCollide then v.CanCollide = false end
         end
-    end
-    
-    -- Thực hiện đổi
-    if #tools > 0 then
-        local realIndex = ((index - 1) % #tools) + 1
-        local tool = tools[realIndex]
-        if tool and tool.Parent ~= char then
-            local curr = char:FindFirstChildWhichIsA("Tool")
-            if curr then curr.Parent = player.Backpack end
-            tool.Parent = char
-        end
-    end
-end
-
--- ==========================================
---           MAIN LOOP (AUTO PVP)
--- ==========================================
-task.spawn(function()
-    local toolIndex = 1
-    local lastSwitch = 0
-    
-    -- Thông báo bắt đầu
-    pcall(function()
-        StarterGui:SetCore("SendNotification", {
-            Title = "Auto PvP Fixed";
-            Text = "Anti-Sus & SafeCheck ON";
-            Duration = 5;
-        })
-    end)
-
-    while Settings.Attacking do
-        task.wait() -- Heartbeat wait
         
-        pcall(function()
-            local targetPlayer = getSmartTarget()
+        local root = char:FindFirstChild("HumanoidRootPart")
+        if root then
+            if not root:FindFirstChild("AntiFallBV") then
+                local bv = Instance.new("BodyVelocity")
+                bv.Name = "AntiFallBV"
+                bv.Parent = root
+                bv.MaxForce = Vector3.new(0, math.huge, 0)
+                bv.Velocity = Vector3.new(0, 0, 0)
+            end
             
-            if targetPlayer then
-                local targetChar = targetPlayer.Character
-                local tRoot = targetChar:FindFirstChild("HumanoidRootPart")
-                local tHum = targetChar:FindFirstChild("Humanoid")
-                
-                -- Vòng lặp chiến đấu với mục tiêu
-                while targetChar and targetChar.Parent and tHum.Health > 0 and tRoot do
-                    local root = getRoot()
-                    if not root then break end
-
-                    -- [CHECK 1]: Địch chạy vào Safe Zone -> Bỏ qua
-                    if Settings.CheckSafeZone and targetChar:FindFirstChildOfClass("ForceField") then
-                        break 
-                    end
-                    
-                    -- [CHECK 2]: Địch chết -> Thêm vào Blacklist -> Break để tìm người mới
-                    if tHum.Health <= 0 then
-                        Blacklist[targetPlayer.Name] = tick()
-                        break
-                    end
-
-                    -- 1. Aim & Tween (Prediction nhẹ)
-                    local predictPos = tRoot.Position + (tRoot.Velocity * 0.15)
-                    local chaseCFrame = CFrame.lookAt(tRoot.Position + Vector3.new(0, Settings.Distance, 0), predictPos)
-                    
-                    tweenTo(chaseCFrame)
-                    camera.CFrame = CFrame.new(camera.CFrame.Position, predictPos)
-
-                    -- 2. Auto Đổi Tool
-                    if tick() - lastSwitch > 3.5 then
-                        equipToolByIndex(toolIndex)
-                        toolIndex = toolIndex + 1
-                        lastSwitch = tick()
-                    end
-
-                    -- 3. Click Đánh
-                    local vp = camera.ViewportSize
-                    VirtualInputManager:SendMouseButtonEvent(vp.X/2, vp.Y/2, 0, true, game, 1)
-                    VirtualInputManager:SendMouseButtonEvent(vp.X/2, vp.Y/2, 0, false, game, 1)
-
-                    -- 4. Spam Skill Random
-                    local keys = {Enum.KeyCode.Z, Enum.KeyCode.X, Enum.KeyCode.C, Enum.KeyCode.V}
-                    for _, k in ipairs(keys) do pressKey(k) end
-                    
-                    -- 5. Né Skill (E)
-                    if Settings.AutoDodgeSkill then pressKey(Enum.KeyCode.E) end
-
-                    task.wait()
-                    
-                    -- Kiểm tra lại xem địch còn tồn tại không
-                    if not targetPlayer or not targetPlayer.Parent then break end
+            local bv = root:FindFirstChild("AntiFallBV")
+            if bv then
+                if IsRetreating then
+                    bv.Velocity = Vector3.new(0, 50, 0) 
+                else
+                    bv.Velocity = Vector3.new(0, 0, 0)
                 end
             end
-        end)
+        end
     end
 end)
 
 -- ==========================================
---           AUTO BUFF (LOOP RIÊNG)
+--        SMART TOOL SWITCH
+-- ==========================================
+function switchToolSmart()
+    local hum = getHum()
+    local backpack = player.Backpack
+    local tools = {}
+    local allItems = {}
+    
+    for _, t in pairs(backpack:GetChildren()) do table.insert(allItems, t) end
+    for _, t in pairs(getChar():GetChildren()) do if t:IsA("Tool") then table.insert(allItems, t) end end
+    
+    for _, t in pairs(allItems) do
+        if t:IsA("Tool") and t:FindFirstChild("Handle") then table.insert(tools, t) end
+    end
+    
+    if #tools > 0 then
+        ToolIndex = ToolIndex + 1
+        if ToolIndex > #tools then ToolIndex = 1 end
+        local targetTool = tools[ToolIndex]
+        if targetTool then hum:EquipTool(targetTool) end
+    end
+end
+
+function tweenTo(targetCFrame)
+    local root = getRoot()
+    if not root then return end
+    local speed = IsRetreating and 500 or Settings.TweenSpeed
+    local dist = (root.Position - targetCFrame.Position).Magnitude
+    local info = TweenInfo.new(dist / speed, Enum.EasingStyle.Linear)
+    TweenService:Create(root, info, {CFrame = targetCFrame}):Play()
+end
+
+-- ==========================================
+--           MAIN LOGIC LOOP
 -- ==========================================
 task.spawn(function()
-    while Settings.Attacking do
-        task.wait(2)
-        if Settings.AutoHaki then pressKey(Enum.KeyCode.J) end
-        if Settings.AutoV3 then pressKey(Enum.KeyCode.T) end
-        if Settings.AutoV4 then pressKey(Enum.KeyCode.Y) end
+    while Settings.Enable do
+        task.wait()
+        pcall(function()
+            local myHum = getHum()
+            local myRoot = getRoot()
+            
+            -- [1] RETREAT LOGIC
+            local hpPercent = (myHum.Health / myHum.MaxHealth) * 100
+            if hpPercent <= Settings.LowHP then IsRetreating = true
+            elseif hpPercent >= Settings.SafeHP then IsRetreating = false end
+            
+            if IsRetreating then
+                SkipBtn.Visible = false
+                tweenTo(CFrame.new(myRoot.Position.X, Settings.RetreatHeight, myRoot.Position.Z))
+                return 
+            end
+            
+            -- [2] TARGET SCANNER
+            if not CurrentTarget or not CurrentTarget.Parent or not CurrentTarget.Character or CurrentTarget.Character.Humanoid.Health <= 0 then
+                CurrentTarget = nil
+                SkipBtn.Visible = false
+                local minDist = math.huge
+                for _, p in pairs(Players:GetPlayers()) do
+                    if p ~= player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                        local isBlacklisted = Blacklist[p.Name] and (tick() - Blacklist[p.Name] < 300)
+                        local isMarine = (Settings.IgnoreMarines and p.Team and p.Team.Name == "Marines")
+                        local isTeam = (Settings.TeamCheck and p.Team == player.Team)
+                        local isSafe = p.Character:FindFirstChildOfClass("ForceField")
+                        
+                        if not isBlacklisted and not isMarine and not isTeam and not isSafe then
+                            local d = (p.Character.HumanoidRootPart.Position - myRoot.Position).Magnitude
+                            if d < minDist then
+                                minDist = d
+                                CurrentTarget = p
+                            end
+                        end
+                    end
+                end
+                
+                if CurrentTarget then
+                    LastDamageTime = tick()
+                    EnemyLastHealth = CurrentTarget.Character.Humanoid.Health
+                    SkipBtn.Visible = true
+                end
+            end
+            
+            -- [3] COMBAT ENGINE
+            if CurrentTarget and CurrentTarget.Character then
+                local tChar = CurrentTarget.Character
+                local tRoot = tChar.HumanoidRootPart
+                local tHum = tChar.Humanoid
+                
+                -- Check SafeZone
+                if tChar:FindFirstChildOfClass("ForceField") then
+                    CurrentTarget = nil
+                    return
+                end
+
+                -- Check Notification
+                if tick() - LastUIScan > 0.5 then
+                    if checkSafeZoneNotification() then
+                        Blacklist[CurrentTarget.Name] = tick()
+                        CurrentTarget = nil
+                        return
+                    end
+                    LastUIScan = tick()
+                end
+
+                -- One Kill Skip
+                if tHum.Health <= 0 then
+                    if Settings.OneKillPerPlayer then Blacklist[CurrentTarget.Name] = tick() end
+                    CurrentTarget = nil
+                    return
+                end
+                
+                -- No Damage Skip
+                if tHum.Health < EnemyLastHealth then
+                    EnemyLastHealth = tHum.Health
+                    LastDamageTime = tick() 
+                elseif tick() - LastDamageTime > Settings.NoDamageTimeout then
+                    Blacklist[CurrentTarget.Name] = tick()
+                    CurrentTarget = nil
+                    return
+                end
+                
+                -- ORBIT & MOVEMENT
+                local targetPos = tRoot.Position
+                local aimPos = getAimPosition(tRoot)
+                local finalCFrame
+                
+                if Settings.OrbitMode then
+                    local t = tick() * Settings.OrbitSpeed
+                    local offset = Vector3.new(math.cos(t) * Settings.HoldDistance, Settings.Height, math.sin(t) * Settings.HoldDistance)
+                    finalCFrame = CFrame.new(targetPos + offset, aimPos) 
+                else
+                    finalCFrame = CFrame.new(targetPos + Vector3.new(0, Settings.Height, 0), aimPos)
+                end
+                
+                tweenTo(finalCFrame)
+                camera.CFrame = CFrame.new(camera.CFrame.Position, aimPos)
+                
+                -- SMART MOVES
+                local dist = (myRoot.Position - targetPos).Magnitude
+                if dist < 25 then
+                    if Settings.SmartDash and math.random() > 0.9 then pressKey(Enum.KeyCode.Q) end
+                    if Settings.SmartSoru and math.random() > 0.9 then pressKey(Enum.KeyCode.F) end
+                    if Settings.SmartJump and math.random() > 0.9 then myHum.Jump = true end
+                end
+                
+                -- ATTACK
+                if tick() - LastToolSwitch > 3.5 then
+                    switchToolSmart()
+                    LastToolSwitch = tick()
+                end
+                
+                VirtualInputManager:SendMouseButtonEvent(camera.ViewportSize.X/2, camera.ViewportSize.Y/2, 0, true, game, 1)
+                VirtualInputManager:SendMouseButtonEvent(camera.ViewportSize.X/2, camera.ViewportSize.Y/2, 0, false, game, 1)
+                
+                local skills = {Enum.KeyCode.Z, Enum.KeyCode.X, Enum.KeyCode.C, Enum.KeyCode.V}
+                pressKey(skills[math.random(1, #skills)])
+                
+                if tick() - LastBuffTime > 6 then
+                    pressKey(Enum.KeyCode.T)
+                    pressKey(Enum.KeyCode.Y) 
+                    LastBuffTime = tick()
+                end
+                pressKey(Enum.KeyCode.E) 
+            end
+        end)
     end
 end)
