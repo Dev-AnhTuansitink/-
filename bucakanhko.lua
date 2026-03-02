@@ -16,7 +16,7 @@ local function NotificacaoNightMystic(titulo, mensagem)
     local success = pcall(function()
         local TweenService = Services.TweenService
         local CoreGui = Services.CoreGui
-        local LogoID = "rbxassetid://73902065845651"
+        local LogoID = "rbxassetid://120488231660846"
 
         local ScreenGui = Instance.new("ScreenGui")
         ScreenGui.Name = "NM_Notify"
@@ -93,17 +93,17 @@ local function NotificacaoNightMystic(titulo, mensagem)
     end)
     
     if not success then
-        warn("[Maça] Erro ao exibir notificação")
+        warn("[NatAov] Erro ao exibir notificação")
     end
 end
 
-NotificacaoNightMystic("Maça Hub", "Script carregado com sucesso!")
+NotificacaoNightMystic("NatAov Hub", "Script carregado com sucesso!")
 
 -- ========================================
 -- SAVE SYSTEM (Optimized)
 -- ========================================
 local HttpService = Services.HttpService
-local FolderName = "Maça Hub"
+local FolderName = "NatAov Hub"
 local FileName = "Settings.json"
 local FullPath = FolderName .. "/" .. FileName
 
@@ -2395,10 +2395,10 @@ QuestNeta = function()
 			[6] = PosQ,
 		};
 	end;
-	local Library = loadstring(game:HttpGet("https://pastefy.app/2NsMZRkm/raw"))():MakeWindow({
-    Title = "Maça Hub",
-    SubTitle = "by two and seven and yezzy",
-    SaveFolder = "Maça.json"
+	local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/Dev-AnhTuansitink/Ui_vip_pro/refs/heads/main/%5B%20RedzHubLibrary%20%5D.lua"))():MakeWindow({
+    Title = "NatAov Hub",
+    SubTitle = "by tuanxdepzaii",
+    SaveFolder = "NatAov.json"
 })
 -- Criar ScreenGui
 local screenGui = Instance.new("ScreenGui")
@@ -2409,7 +2409,7 @@ screenGui.Parent = game.CoreGui
 local imageButton = Instance.new("ImageButton")
 imageButton.Size = UDim2.new(0, 50, 0, 50)
 imageButton.Position = UDim2.new(0.15, 0, 0.15, 0)
-imageButton.Image = "rbxassetid://73902065845651"
+imageButton.Image = "rbxassetid://120488231660846"
 imageButton.BackgroundTransparency = 1
 imageButton.Parent = screenGui
 
@@ -2555,9 +2555,9 @@ local Setting = Library:MakeTab({
     Icon = "rbxassetid://7734053495"
 })
 Discord:AddDiscordInvite({
-    Name = "Maça Hub",
+    Name = "NatAov Hub",
     Description = "Join for support and updates",
-    Logo = "rbxassetid://73902065845651",
+    Logo = "rbxassetid://120488231660846",
     Invite = "https://discord.gg/F2NXMVZ3VE"
 })
 local credits = Discord:AddParagraph({
@@ -12111,6 +12111,6 @@ end)
 _ENV.rz_FastAttack = FastAttack
 FastAttackModule.FastAttack = FastAttack
 
-NotificacaoNightMystic("Maça Hub", "✅ Todos os sistemas carregados!")
+NotificacaoNightMystic("NatAov Hub", "✅ Todos os sistemas carregados!")
 
 return FastAttackModulem
