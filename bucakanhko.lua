@@ -1053,7 +1053,7 @@ function UpdateDevilChams()
                         text.BackgroundTransparency = 1
                         text.TextScaled = true
                         text.Font = Enum.Font.GothamBold
-                        text.TextColor3 = Color3.fromRGB(120, 0, 0) -- vermelho escuro
+                        text.TextColor3 = Color3.fromRGB(120, 0, 0) 
                         text.TextStrokeTransparency = 0
                         text.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
                         text.Parent = bill
@@ -1261,7 +1261,6 @@ function UpdatePlayerChams()
                 local hum = char:FindFirstChild("Humanoid")
                 if not hrp or not hum then return end
 
-                -- DESLIGADO → remove ESP
                 if not ESPPlayer then
                     if hrp:FindFirstChild("PlayerESP") then
                         hrp.PlayerESP:Destroy()
@@ -1273,10 +1272,8 @@ function UpdatePlayerChams()
                     return
                 end
 
-                -- JÁ EXISTE → não recria
                 if hrp:FindFirstChild("PlayerESP") then return end
 
-                -- CRIA ESP
                 local gui = Instance.new("BillboardGui")
                 gui.Name = "PlayerESP"
                 gui.Adornee = hrp
@@ -1393,7 +1390,7 @@ function UpdateDevilChams()
                         text.BackgroundTransparency = 1
                         text.TextScaled = true
                         text.Font = Enum.Font.GothamBold
-                        text.TextColor3 = Color3.fromRGB(120, 0, 0) -- vermelho escuro
+                        text.TextColor3 = Color3.fromRGB(120, 0, 0) 
                         text.TextStrokeTransparency = 0
                         text.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
                         text.Parent = bill
@@ -3736,10 +3733,10 @@ function CheckItemBPCRBPCR(v463)
         end
     end
 end
-local vu32 = loadstring(game:HttpGet("https://raw.githubusercontent.com/Dev-AnhTuansitink/Ui_vip_pro/refs/heads/main/ui.redz.txt"))()
+local vu32 = loadstring(game:HttpGet("https://raw.githubusercontent.com/PlockScripts/Library-ui/refs/heads/main/redz-V5-remake/main.luau"))()
 local v466 = vu32:MakeWindow({
-    Title = "TuanAov hub : Blox Fruits",
-    SubTitle = "new version",
+    Title = "redz hub [ BETA ACCESS ] : Blox Fruits",
+    SubTitle = "remake version",
     SaveFolder = "Redz | redz lib v5.lua"
 })
 
@@ -3751,21 +3748,22 @@ v466:AddMinimizeButton({
 
 local v484 = v466:MakeTab({"Discord", "info"})
 local v485 = v466:MakeTab({"Farm", "home"})
-local v487 = v466:MakeTab({"Quest | Items", "swords"})
-local v486 = v466:MakeTab({"Auto Fishing", "rbxassetid://127664059821666"})
-local v489 = v466:MakeTab({"Sea Event", "waves"})
+local v486 = v466:MakeTab({"Fishing", "rbxassetid://127664059821666"})
+local v487 = v466:MakeTab({"Quest/Items", "swords"})
 local v491 = v466:MakeTab({"Raid/Fruits", "cherry"})
+local v489 = v466:MakeTab({"Sea Event", "waves"})
 local v497 = v466:MakeTab({"Stats", "Signal"})
 local v493 = v466:MakeTab({"Teleport", "locate"})
 local v499 = v466:MakeTab({"Status", "Scroll"})
 local v494 = v466:MakeTab({"Visual", "user"})
 local v495 = v466:MakeTab({"Shop", "shoppingCart"})
 local v496 = v466:MakeTab({"Misc", "settings"})
+
 v484:AddDiscordInvite({
     Name = "DesplockHub | Community",
     Description = "Join server to receive Update",
     Logo = "rbxassetid://131723242350068",
-    Invite = "https://discord.gg/"
+    Invite = "https://discord.gg/BnEDf68jwx"
 })
 _G.SelectWeapon = "Melee"
 task.spawn(function()
@@ -3829,26 +3827,25 @@ v485:AddDropdown({
         elseif p36 == "Large" then
             vu32:SetScale(450)
         elseif p36 == "Bigger" then
-            vu32:SetScale(300)  -- menor número = maior UI
+            vu32:SetScale(300)  
         else
             vu32:SetScale(450)
         end
     end
 })
 local _ = v485:AddSection({"Farm"})
--- Funções auxiliares globais
+
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
 
--- Variáveis para o Farm submarino
+
 local SUBMERGED_Y = -1400
 local SUB_NPC = CFrame.new(-16246.041, 38.48, 1376.539)
 local TravelingSubmerged = false
 local CurrentTween = nil
 
--- Funções auxiliares
 local function HRP()
     return LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
 end
@@ -4026,7 +4023,6 @@ spawn(function()
                         end
                     end
                 else
-                    -- Farm Antigo (1-2599)
                     local l_Text_0 = game:GetService("Players").LocalPlayer.PlayerGui.Main.Quest.Container.QuestTitle.Title.Text
                     CheckQuest()
                     if not string.find(l_Text_0, NameMon) then
@@ -4122,6 +4118,43 @@ spawn(function()
         end
     end
 end)
+v485:AddToggle({
+    Name = "Auto Farm Nearest",
+    Description = "Auto Farm Nearest Mobs",
+    Default = false,
+    Callback = function(v520)
+        _G.AutoNear = v520
+        StopTween(_G.AutoNear)
+    end
+})
+spawn(function()
+    while wait() do
+        if _G.AutoNear then
+            pcall(function()
+                for _, v522 in pairs(game.Workspace.Enemies:GetChildren()) do
+                    if v522:FindFirstChild("Humanoid") and v522:FindFirstChild("HumanoidRootPart") and v522.Humanoid.Health > 0 and (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - v522.HumanoidRootPart.Position).Magnitude <= 5000 then
+                        repeat
+                            wait(_G.Fast_Delay)
+                            StartBring = true
+                            AutoHaki()
+                            EquipWeapon(_G.SelectWeapon)
+                            topos(v522.HumanoidRootPart.CFrame * CFrame.new(0, 30, 0))
+                            v522.HumanoidRootPart.Size = Vector3.new(60, 60, 60)
+                            v522.HumanoidRootPart.Transparency = 1
+                            v522.Humanoid.JumpPower = 0
+                            v522.Humanoid.WalkSpeed = 0
+                            v522.HumanoidRootPart.CanCollide = false
+                            FarmPos = v522.HumanoidRootPart.CFrame
+                            MonFarm = v522.Name
+                        until not _G.AutoNear or not v522.Parent or v522.Humanoid.Health <= 0 or not game.Workspace.Enemies:FindFirstChild(v522.Name)
+                        StartBring = false
+                    end
+                end
+            end)
+        end
+    end
+end)
+
 if World3 then
 v485:AddToggle({
     Name = "Auto Pirates Sea",
@@ -4199,85 +4232,6 @@ if World2 then
         end
     end)
  end
-v485:AddToggle({
-    Name = "Auto Farm Nearest",
-    Description = "Auto Farm Nearest Mobs",
-    Default = false,
-    Callback = function(v520)
-        _G.AutoNear = v520
-        StopTween(_G.AutoNear)
-    end
-})
-spawn(function()
-    while wait() do
-        if _G.AutoNear then
-            pcall(function()
-                for _, v522 in pairs(game.Workspace.Enemies:GetChildren()) do
-                    if v522:FindFirstChild("Humanoid") and v522:FindFirstChild("HumanoidRootPart") and v522.Humanoid.Health > 0 and (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - v522.HumanoidRootPart.Position).Magnitude <= 5000 then
-                        repeat
-                            wait(_G.Fast_Delay)
-                            StartBring = true
-                            AutoHaki()
-                            EquipWeapon(_G.SelectWeapon)
-                            topos(v522.HumanoidRootPart.CFrame * CFrame.new(0, 30, 0))
-                            v522.HumanoidRootPart.Size = Vector3.new(60, 60, 60)
-                            v522.HumanoidRootPart.Transparency = 1
-                            v522.Humanoid.JumpPower = 0
-                            v522.Humanoid.WalkSpeed = 0
-                            v522.HumanoidRootPart.CanCollide = false
-                            FarmPos = v522.HumanoidRootPart.CFrame
-                            MonFarm = v522.Name
-                        until not _G.AutoNear or not v522.Parent or v522.Humanoid.Health <= 0 or not game.Workspace.Enemies:FindFirstChild(v522.Name)
-                        StartBring = false
-                    end
-                end
-            end)
-        end
-    end
-end)
-local _ = v485:AddSection({"Valentine"})
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Remotes = ReplicatedStorage:WaitForChild("Remotes")
-local CommF = Remotes:WaitForChild("CommF_")
-
-_G.AutoValentineGacha = false
-
-v485:AddToggle({
-    Name = "Auto Valentine Random",
-    Description = "Auto Gacha Valentine Roll",
-    Default = false,
-    Callback = function(Value)
-        _G.AutoValentineGacha = Value
-    end
-})
-
-local function fireActivity()
-    local reportRemote = ReplicatedStorage:FindFirstChild("ReportActivity", true)
-    if reportRemote and reportRemote:IsA("RemoteEvent") then
-        pcall(function()
-            reportRemote:FireServer("GachaWindow")
-        end)
-    end
-end
-
-task.spawn(function()
-    while task.wait(2.5) do
-        if not _G.AutoValentineGacha then continue end
-
-        pcall(function()
-            CommF:InvokeServer("Cousin")
-            task.wait(0.1)
-
-            fireActivity()
-            task.wait(0.1)
-
-            CommF:InvokeServer("Cousin", "CheckCanBuyType", "ValentinesGacha26")
-            task.wait(0.1)
-
-            CommF:InvokeServer("Cousin", "ValentinesGacha26")
-        end)
-    end
-end)
 
 if World3 then
 local _ = v485:AddSection({"Kill Player"})
@@ -8386,9 +8340,6 @@ else
 
 local _ = v491:AddSection({"Raid Fruits"})
 
--- =========================
--- SELECT CHIP
--- =========================
 _G.SelectChip = "Flame"
 _G.AutoBuyChip = false
 _G.StartRaid = false
@@ -8406,9 +8357,6 @@ v491:AddDropdown({
     end
 })
 
--- =========================
--- AUTO BUY CHIP
--- =========================
 v491:AddToggle({
     Name = "Auto Buy Chip",
     Default = false,
@@ -8431,9 +8379,6 @@ task.spawn(function()
     end
 end)
 
--- =========================
--- AUTO START RAID
--- =========================
 v491:AddToggle({
     Name = "Auto Start Raid",
     Default = false,
@@ -8472,9 +8417,6 @@ task.spawn(function()
     end
 end)
 
--- =========================
--- AUTO FARM RAID NEXT ISLAND
--- =========================
 v491:AddToggle({
     Name = "Auto Farm Raid Next Island",
     Default = false,
@@ -8937,7 +8879,6 @@ spawn(function()
 end)
 
 
--- // AUTO STATS SYSTEM
 local Replicated = game:GetService("ReplicatedStorage")
 local CommF = Replicated:WaitForChild("Remotes"):WaitForChild("CommF_")
 
@@ -8969,7 +8910,6 @@ local function DistributePoints()
         local points = statsFolder:FindFirstChild("Points")
         if not points or points.Value <= 0 then continue end
         
-        -- Ver quantos Stats estÃ£o ativos
         local EnabledStats = {}
         for stat, enabled in pairs(StatsSelect) do
             if enabled then
@@ -8988,7 +8928,6 @@ local function DistributePoints()
     end
 end
 
--- UI
 v497:AddSlider({
     Name = "Points Amount",
     Min = 1,
@@ -9062,9 +9001,6 @@ local AimPlayers = false
 local AimMobs = false
 local IgnoreMobs = true
 
--- ===============================
--- FUNÇÃO DE ATUALIZAÇÃO (COMPATÍVEL COM SUA LÓGICA)
--- ===============================
 local function UpdateAimbot()
     if not AimbotEnabled then
         v1:SetPlayerSilentAim(false)
@@ -9072,14 +9008,12 @@ local function UpdateAimbot()
         return
     end
 
-    -- Se estiver mirando players
     if AimPlayers then
         v1:SetPlayerSilentAim(true)
         v1:SetNPCSilentAim(false)
         return
     end
 
-    -- Se estiver mirando mobs
     if AimMobs then
         if IgnoreMobs then
             v1:SetNPCSilentAim(false)
@@ -9457,69 +9391,99 @@ v494:AddToggle({
     end
 })
 
-v494:AddToggle({
-    Title = "ESP Fruits",
-    Value = false,
-    Callback = function(state)
-        DevilFruitESP = state
 
-        if DevilFruitESP then
-            task.spawn(function()
-                while DevilFruitESP do
-                    local player = game:GetService("Players").LocalPlayer
-                    local char = player.Character
-                    if not char or not char:FindFirstChild("HumanoidRootPart") then
-                        task.wait(1)
-                        continue
+local Players = game:GetService("Players")
+local FileName = "ESP_Fruits_Save.txt"
+
+local DevilFruitESP = false
+
+if isfile and isfile(FileName) then
+    DevilFruitESP = readfile(FileName) == "true"
+else
+    if writefile then
+        writefile(FileName,"false")
+    end
+end
+
+local function StartFruitESP()
+    task.spawn(function()
+        while DevilFruitESP do
+            local player = Players.LocalPlayer
+            local char = player.Character
+            if not char or not char:FindFirstChild("HumanoidRootPart") then
+                task.wait(1)
+                continue
+            end
+
+            local rootPos = char.HumanoidRootPart.Position
+
+            for _,obj in pairs(workspace:GetChildren()) do
+                if obj:IsA("Tool") and string.find(obj.Name,"Fruit") and obj.Parent ~= char then
+                    local basePart = obj:FindFirstChild("Handle") or obj.PrimaryPart
+                    if not basePart then continue end
+
+                    if not basePart:FindFirstChild("FruitESP") then
+                        local gui = Instance.new("BillboardGui")
+                        gui.Name = "FruitESP"
+                        gui.Size = UDim2.new(0,140,0,35)
+                        gui.StudsOffset = Vector3.new(0,1.5,0)
+                        gui.AlwaysOnTop = true
+                        gui.Adornee = basePart
+                        gui.Parent = basePart
+
+                        local text = Instance.new("TextLabel")
+                        text.Name = "Label"
+                        text.Size = UDim2.new(1,0,1,0)
+                        text.BackgroundTransparency = 1
+                        text.TextScaled = true
+                        text.Font = Enum.Font.SourceSansBold
+                        text.TextColor3 = Color3.fromRGB(120,0,0)
+                        text.TextStrokeTransparency = 0
+                        text.TextStrokeColor3 = Color3.fromRGB(0,0,0)
+                        text.Parent = gui
                     end
 
-                    local rootPos = char.HumanoidRootPart.Position
+                    local fruitPos = basePart.Position
+                    local distance = math.floor((rootPos - fruitPos).Magnitude)
 
-                    for _,obj in pairs(workspace:GetChildren()) do
-                        if obj:IsA("Tool") and string.find(obj.Name,"Fruit") and obj.Parent ~= char then
-                            
-                            local basePart = obj:FindFirstChild("Handle") or obj.PrimaryPart
-                            if not basePart then continue end
-
-                            if not basePart:FindFirstChild("FruitESP") then
-                                local gui = Instance.new("BillboardGui")
-                                gui.Name = "FruitESP"
-                                gui.Size = UDim2.new(0,200,0,50)
-                                gui.StudsOffset = Vector3.new(0,2,0)
-                                gui.AlwaysOnTop = true
-                                gui.Adornee = basePart
-                                gui.Parent = basePart
-
-                                local text = Instance.new("TextLabel")
-                                text.Size = UDim2.new(1,0,1,0)
-                                text.BackgroundTransparency = 1
-                                text.TextScaled = true
-                                text.Font = Enum.Font.SourceSans
-                                text.TextColor3 = Color3.fromRGB(120,0,0)
-                                text.TextStrokeTransparency = 0
-                                text.TextStrokeColor3 = Color3.fromRGB(0,0,0)
-                                text.Parent = gui
-                            end
-
-                            local fruitPos = basePart.Position
-                            local distance = math.floor((rootPos - fruitPos).Magnitude)
-
-                            basePart.FruitESP.TextLabel.Text = "Fruit | ??? | < "..distance.." >"
-                        end
-                    end
-
-                    task.wait(0.3)
-                end
-            end)
-        else
-            for _,obj in pairs(workspace:GetDescendants()) do
-                if obj.Name == "FruitESP" then
-                    obj:Destroy()
+                    basePart.FruitESP.Label.Text = "Fruit | ??? | < "..distance.." >"
                 end
             end
+
+            task.wait(0.3)
+        end
+    end)
+end
+
+local function StopFruitESP()
+    for _,obj in pairs(workspace:GetDescendants()) do
+        if obj.Name == "FruitESP" then
+            obj:Destroy()
+        end
+    end
+end
+
+v494:AddToggle({
+    Title = "ESP Fruits",
+    Value = DevilFruitESP,
+    Callback = function(state)
+        DevilFruitESP = state
+        if writefile then
+            writefile(FileName, tostring(state))
+        end
+
+        if state then
+            StartFruitESP()
+        else
+            StopFruitESP()
         end
     end
 })
+
+if DevilFruitESP then
+    StartFruitESP()
+end
+
 
 v494:AddToggle({
     Title = "Esp Berry",
@@ -10103,12 +10067,13 @@ v496:AddButton({
         if jobId and jobId ~= "" then
             TeleportService:TeleportToPlaceInstance(game.PlaceId, jobId, LocalPlayer)
         else
-            warn("Clipboard vazio ou inválido")
+            warn("")
         end
     end
 })
 
 local _ = v496:AddSection({"Settings"})
+
 v496:AddToggle({
     Name = "Fast Attack",
     Description = "",
@@ -10291,73 +10256,273 @@ spawn(function()
         end)
     end
 end)
-function InMyNetWork(v1168)
-    if not isnetworkowner then
-        if (v1168.Position - game.Players.LocalPlayer.Character.HumanoidRootPart.Position).Magnitude > 320 then
-            return false
-        else
-            return true
+
+v496:AddSection("Server")
+v496:AddButton({
+    Title = "Rejoin Server",
+    Callback = function()
+        game:GetService("TeleportService"):Teleport(game.PlaceId, game:GetService("Players").LocalPlayer)
+    end
+})
+v496:AddButton({Title = "Server Hop", Callback = function()
+    Hop()
+end})
+
+local Players = game:GetService("Players")
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
+
+local Player = Players.LocalPlayer
+local PlaceId = game.PlaceId
+local JobId = game.JobId
+
+_G.AutoRejoin30m = false
+local RejoinRunning = false
+
+-- ===== PEGAR SERVIDOR DIFERENTE =====
+function GetNewServer()
+    local Servers = {}
+    
+    local req = game:HttpGet(
+        "https://games.roblox.com/v1/games/"..PlaceId.."/servers/Public?sortOrder=Asc&limit=100"
+    )
+    
+    local data = HttpService:JSONDecode(req)
+
+    for _, server in pairs(data.data) do
+        if server.playing < server.maxPlayers and server.id ~= JobId then
+            table.insert(Servers, server.id)
         end
-    else
-        return isnetworkowner(v1168)
+    end
+
+    if #Servers > 0 then
+        return Servers[math.random(1, #Servers)]
     end
 end
-local Players = game:GetService("Players")
-local l_LocalPlayer_18 = Players.LocalPlayer
 
--- arquivos de save
+-- ===== TOGGLE REDZLIB =====
+v496:AddToggle({
+    Name = "Anti-reset",
+    Description = "Server hop every 30 minutes",
+    Default = false,
+    Callback = function(Value)
+        _G.AutoRejoin30m = Value
+        
+        if Value and not RejoinRunning then
+            RejoinRunning = true
+            
+            task.spawn(function()
+                while _G.AutoRejoin30m do
+                    task.wait(1800) -- 30 minutos
+                    
+                    if not _G.AutoRejoin30m then break end
+                    
+                    local NewServer = GetNewServer()
+                    
+                    if NewServer then
+                        TeleportService:TeleportToPlaceInstance(PlaceId, NewServer, Player)
+                    else
+                        TeleportService:Teleport(PlaceId, Player)
+                    end
+                end
+                
+                RejoinRunning = false
+            end)
+        end
+    end
+})
+
+v496:AddSection("Team")
+v496:AddButton({
+    Title = "Join Pirates Team",
+    Callback = function()
+        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("SetTeam", "Pirates")
+    end
+})
+v496:AddButton({
+    Title = "Join Marines Team",
+    Callback = function()
+        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("SetTeam", "Marines")
+    end
+})
+
+v496:AddSection("Race")
+v496:AddToggle({
+    Title = "Auto Active Race V3",
+    Description = "",
+    Value = false,
+    Callback = function(v1171)
+        _G.AutoRaceV3 = v1171
+    end
+})
+spawn(function()
+    while wait() do
+        pcall(function()
+            if _G.AutoRaceV3 then
+                game:GetService("ReplicatedStorage").Remotes.CommE:FireServer("ActivateAbility")
+            end
+        end)
+    end
+end)
+
+local Players = game:GetService("Players")
+local FileName = "AutoRaceV4_Save.txt"
+
+_G.AutoRaceV4 = false
+
+if isfile and isfile(FileName) then
+    local v = readfile(FileName)
+    _G.AutoRaceV4 = (v == "true")
+else
+    if writefile then
+        writefile(FileName,"false")
+    end
+end
+
+v496:AddToggle({
+    Title = "Auto Active Race V4",
+    Description = "",
+    Value = _G.AutoRaceV4,
+    Callback = function(state)
+        _G.AutoRaceV4 = state
+        if writefile then
+            writefile(FileName, tostring(state))
+        end
+    end
+})
+
+spawn(function()
+    while task.wait(0.5) do
+        if _G.AutoRaceV4 then
+            pcall(function()
+                local player = Players.LocalPlayer
+                local char = player.Character
+                if not char then return end
+
+                local energy = char:FindFirstChild("RaceEnergy")
+                local transformed = char:FindFirstChild("RaceTransformed")
+
+                if energy and transformed then
+                    if energy.Value >= 1 and not transformed.Value then
+                        local vim = game:GetService("VirtualInputManager")
+                        vim:SendKeyEvent(true, Enum.KeyCode.Y, false, game)
+                        task.wait(0.1)
+                        vim:SendKeyEvent(false, Enum.KeyCode.Y, false, game)
+                        task.wait(5)
+                    end
+                end
+            end)
+        end
+    end
+end)
+
+v496:AddSection("Menu")
+v496:AddButton({
+    Title = "Open Title Name",
+    Callback = function()
+        local v1209 = {[1] = "getTitles"}
+        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer(unpack(v1209))
+        game.Players.localPlayer.PlayerGui.Main.Titles.Visible = true
+    end
+})
+
+v496:AddSection("Local-Player")
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
 local SPEED_SAVE_FILE = "walkspeed_save.txt"
 local JUMP_SAVE_FILE = "jump_save.txt"
+local TOGGLE_SAVE_FILE = "movement_toggle_save.txt"
 
--- carrega valores salvos
-if isfile(SPEED_SAVE_FILE) then
-	getgenv().WalkSpeedValue = tonumber(readfile(SPEED_SAVE_FILE)) or 58
+local MovementEnabled = false
+
+if isfile(TOGGLE_SAVE_FILE) then
+	MovementEnabled = readfile(TOGGLE_SAVE_FILE) == "true"
 else
-	getgenv().WalkSpeedValue = 58
+	writefile(TOGGLE_SAVE_FILE, "false")
+end
+
+local WalkSpeedValue = 58
+local JumpValue = 58
+
+if isfile(SPEED_SAVE_FILE) then
+	WalkSpeedValue = tonumber(readfile(SPEED_SAVE_FILE)) or 58
+else
+	writefile(SPEED_SAVE_FILE, "58")
 end
 
 if isfile(JUMP_SAVE_FILE) then
-	getgenv().JumpValue = tonumber(readfile(JUMP_SAVE_FILE)) or 58
+	JumpValue = tonumber(readfile(JUMP_SAVE_FILE)) or 58
 else
-	getgenv().JumpValue = 58
+	writefile(JUMP_SAVE_FILE, "58")
 end
 
-local function v1135(v1133)
-	local v1134 = v1133:WaitForChild("Humanoid", 5)
-	if v1134 then
-		v1134.WalkSpeed = getgenv().WalkSpeedValue
-		v1134.JumpPower = getgenv().JumpValue
+local function ApplyMovement(char)
+	local hum = char:WaitForChild("Humanoid",5)
+	if not hum then return end
 
-		v1134:GetPropertyChangedSignal("WalkSpeed"):Connect(function()
-			v1134.WalkSpeed = getgenv().WalkSpeedValue
-		end)
-
-		v1134:GetPropertyChangedSignal("JumpPower"):Connect(function()
-			v1134.JumpPower = getgenv().JumpValue
-		end)
+	if MovementEnabled then
+		hum.WalkSpeed = WalkSpeedValue
+		hum.JumpPower = JumpValue
 	end
+
+	hum:GetPropertyChangedSignal("WalkSpeed"):Connect(function()
+		if MovementEnabled then
+			hum.WalkSpeed = WalkSpeedValue
+		end
+	end)
+
+	hum:GetPropertyChangedSignal("JumpPower"):Connect(function()
+		if MovementEnabled then
+			hum.JumpPower = JumpValue
+		end
+	end)
 end
 
-l_LocalPlayer_18.CharacterAdded:Connect(function(v1136)
-	v1135(v1136)
+LocalPlayer.CharacterAdded:Connect(function(char)
+	task.wait(0.2)
+	ApplyMovement(char)
 end)
 
-if l_LocalPlayer_18.Character then
-	v1135(l_LocalPlayer_18.Character)
+if LocalPlayer.Character then
+	ApplyMovement(LocalPlayer.Character)
 end
+
+v496:AddToggle({
+	Title = "Enable WalkSpeed and Jump",
+	Default = MovementEnabled,
+	Callback = function(v)
+		MovementEnabled = v
+		writefile(TOGGLE_SAVE_FILE, tostring(v))
+
+		local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
+		if hum then
+			if v then
+				hum.WalkSpeed = WalkSpeedValue
+				hum.JumpPower = JumpValue
+			else
+				hum.WalkSpeed = 16
+				hum.JumpPower = 50
+			end
+		end
+	end
+})
 
 v496:AddSlider({
 	Title = "Speed",
 	Min = 26,
 	Max = 300,
-	Default = getgenv().WalkSpeedValue,
-	Callback = function(v1137)
-		getgenv().WalkSpeedValue = v1137
-		writefile(SPEED_SAVE_FILE, tostring(v1137))
+	Default = WalkSpeedValue,
+	Callback = function(v)
+		WalkSpeedValue = v
+		writefile(SPEED_SAVE_FILE, tostring(v))
 
-		local v1138 = l_LocalPlayer_18.Character and l_LocalPlayer_18.Character:FindFirstChild("Humanoid")
-		if v1138 then
-			v1138.WalkSpeed = v1137
+		if MovementEnabled then
+			local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
+			if hum then
+				hum.WalkSpeed = v
+			end
 		end
 	end
 })
@@ -10366,17 +10531,105 @@ v496:AddSlider({
 	Title = "Jump",
 	Min = 50,
 	Max = 500,
-	Default = getgenv().JumpValue,
-	Callback = function(v1139)
-		getgenv().JumpValue = v1139
-		writefile(JUMP_SAVE_FILE, tostring(v1139))
+	Default = JumpValue,
+	Callback = function(v)
+		JumpValue = v
+		writefile(JUMP_SAVE_FILE, tostring(v))
 
-		local v1140 = l_LocalPlayer_18.Character and l_LocalPlayer_18.Character:FindFirstChild("Humanoid")
-		if v1140 then
-			v1140.JumpPower = v1139
+		if MovementEnabled then
+			local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
+			if hum then
+				hum.JumpPower = v
+			end
 		end
 	end
 })
+
+v496:AddSection("Visual")
+local Lighting = game:GetService("Lighting")
+local FULLBRIGHT_SAVE_FILE = "fullbright_save.txt"
+
+-- Salvar valores originais
+local OriginalLighting = {
+	Ambient = Lighting.Ambient,
+	ColorShift_Bottom = Lighting.ColorShift_Bottom,
+	ColorShift_Top = Lighting.ColorShift_Top,
+	Brightness = Lighting.Brightness,
+	GlobalShadows = Lighting.GlobalShadows
+}
+
+local function ApplyFullBright(state)
+	if state then
+		Lighting.Ambient = Color3.new(1, 1, 1)
+		Lighting.ColorShift_Bottom = Color3.new(1, 1, 1)
+		Lighting.ColorShift_Top = Color3.new(1, 1, 1)
+		Lighting.Brightness = 3
+		Lighting.GlobalShadows = false
+	else
+		-- Restaurar original
+		Lighting.Ambient = OriginalLighting.Ambient
+		Lighting.ColorShift_Bottom = OriginalLighting.ColorShift_Bottom
+		Lighting.ColorShift_Top = OriginalLighting.ColorShift_Top
+		Lighting.Brightness = OriginalLighting.Brightness
+		Lighting.GlobalShadows = OriginalLighting.GlobalShadows
+	end
+end
+
+local FullBrightEnabled = false
+
+if isfile(FULLBRIGHT_SAVE_FILE) then
+	FullBrightEnabled = readfile(FULLBRIGHT_SAVE_FILE) == "true"
+else
+	writefile(FULLBRIGHT_SAVE_FILE, "false")
+end
+
+ApplyFullBright(FullBrightEnabled)
+
+v496:AddToggle({
+	Title = "Full Bright",
+	Value = FullBrightEnabled,
+	Callback = function(Value)
+		FullBrightEnabled = Value
+		writefile(FULLBRIGHT_SAVE_FILE, tostring(Value))
+		ApplyFullBright(Value)
+	end
+})
+
+v496:AddButton({
+   Title = "Remove Sky Fog",
+   Description = "",
+   Callback = function()
+    if Lighting:FindFirstChild("LightingLayers") then Lighting.LightingLayers:Destroy() end
+    if Lighting:FindFirstChild("SeaTerrorCC") then Lighting.SeaTerrorCC:Destroy() end
+    if Lighting:FindFirstChild("FantasySky") then Lighting.FantasySky:Destroy() end
+end
+})
+
+
+
+v496:AddButton({
+	Name = "FPS Boost",
+	Callback = function()
+		for _, v in ipairs(game:GetDescendants()) do
+			if v:IsA("BasePart") then
+				v.Material = Enum.Material.SmoothPlastic
+				v.Reflectance = 0
+			elseif v:IsA("Decal") or v:IsA("Texture") then
+				v:Destroy()
+			elseif v:IsA("ParticleEmitter") or v:IsA("Trail") then
+				v.Enabled = false
+			elseif v:IsA("Lighting") then
+				v.GlobalShadows = false
+				v.FogEnd = 1e10
+				v.Brightness = 0
+			end
+		end
+		setfpscap(60)
+	end
+})
+
+v496:AddSection("Others")
+
 v496:AddToggle({
     Name = "Delete Lava",
     Description = "",
@@ -10417,95 +10670,7 @@ spawn(function()
         end
     end
 end)
-v496:AddToggle({Title = "Infinite Soru", Value = false, Callback = function(v1170)
-    _G.AutoHaki = v1170
-end})
-spawn(function()
-    while task.wait(0.1) do
-        if _G.AutoHaki then
-            pcall(AutoHaki)
-        end
-    end
-end)
-v496:AddToggle({
-    Title = "Auto Active Race V3",
-    Description = "",
-    Value = false,
-    Callback = function(v1171)
-        _G.AutoRaceV3 = v1171
-    end
-})
-spawn(function()
-    while wait() do
-        pcall(function()
-            if _G.AutoRaceV3 then
-                game:GetService("ReplicatedStorage").Remotes.CommE:FireServer("ActivateAbility")
-            end
-        end)
-    end
-end)
-_G.AutoRaceV4 = false
 
-v496:AddToggle({
-    Title = "Auto Active Race V4",
-    Description = "",
-    Value = false,
-    Callback = function(state)
-        _G.AutoRaceV4 = state
-    end
-})
-
-spawn(function()
-    while task.wait(0.5) do
-        if _G.AutoRaceV4 then
-            pcall(function()
-
-                local player = game.Players.LocalPlayer
-                local char = player.Character
-                if not char then return end
-
-                local energy = char:FindFirstChild("RaceEnergy")
-                local transformed = char:FindFirstChild("RaceTransformed")
-
-                if energy and transformed then
-                    if energy.Value >= 1 and not transformed.Value then
-                        
-                        local vim = game:GetService("VirtualInputManager")
-                        vim:SendKeyEvent(true, Enum.KeyCode.Y, false, game)
-                        task.wait(0.1)
-                        vim:SendKeyEvent(false, Enum.KeyCode.Y, false, game)
-
-                        task.wait(5)
-                    end
-                end
-
-            end)
-        end
-    end
-end)
-v496:AddToggle({Title = "Infinite Soru", Value = false, Callback = function(v1173)
-    InfiniteSoru = v1173
-end})
-spawn(function()
-    while task.wait(1) do
-        if InfiniteSoru and game:GetService("Players").LocalPlayer.Character:FindFirstChild("HumanoidRootPart") ~= "HumanoidRootPart" then
-            pcall(function()
-                for _, v1175 in next, getgc() do
-                    if getfenv(v1175).script == game.Players.LocalPlayer.Character:WaitForChild("Soru") then
-                        for v1176, v1177 in pairs(debug.getupvalues(v1175)) do
-                            if type(v1177) == "table" and v1177.LastUse then
-                                repeat
-                                    task.wait(0.1)
-                                    setupvalue(v1175, v1176, {LastAfter = 0, LastUse = 0})
-                                until not InfiniteSoru or game:GetService("Players").LocalPlayer.Character.Humanoid.Health <= 0
-                            end
-                        end
-                    end
-                end
-            end)
-        end
-    end
-end)
 PosY = 30
 v496:AddToggle({Title = "Dodge No CD", Value = false, Callback = function(v1178)
     DodgewithoutCool = v1178
@@ -10574,106 +10739,6 @@ spawn(function()
         end)
     end
 end)
-
-local Lighting = game:GetService("Lighting")
-local FULLBRIGHT_SAVE_FILE = "fullbright_save.txt"
-
--- Salvar valores originais
-local OriginalLighting = {
-	Ambient = Lighting.Ambient,
-	ColorShift_Bottom = Lighting.ColorShift_Bottom,
-	ColorShift_Top = Lighting.ColorShift_Top,
-	Brightness = Lighting.Brightness,
-	GlobalShadows = Lighting.GlobalShadows
-}
-
-local function ApplyFullBright(state)
-	if state then
-		Lighting.Ambient = Color3.new(1, 1, 1)
-		Lighting.ColorShift_Bottom = Color3.new(1, 1, 1)
-		Lighting.ColorShift_Top = Color3.new(1, 1, 1)
-		Lighting.Brightness = 3
-		Lighting.GlobalShadows = false
-	else
-		-- Restaurar original
-		Lighting.Ambient = OriginalLighting.Ambient
-		Lighting.ColorShift_Bottom = OriginalLighting.ColorShift_Bottom
-		Lighting.ColorShift_Top = OriginalLighting.ColorShift_Top
-		Lighting.Brightness = OriginalLighting.Brightness
-		Lighting.GlobalShadows = OriginalLighting.GlobalShadows
-	end
-end
-
-local FullBrightEnabled = false
-
-if isfile(FULLBRIGHT_SAVE_FILE) then
-	FullBrightEnabled = readfile(FULLBRIGHT_SAVE_FILE) == "true"
-else
-	writefile(FULLBRIGHT_SAVE_FILE, "false")
-end
-
-ApplyFullBright(FullBrightEnabled)
-
-v496:AddToggle({
-	Title = "Full Bright",
-	Value = FullBrightEnabled,
-	Callback = function(Value)
-		FullBrightEnabled = Value
-		writefile(FULLBRIGHT_SAVE_FILE, tostring(Value))
-		ApplyFullBright(Value)
-	end
-})
-
-v496:AddButton({
-   Title = "Remove Sky Fog",
-   Description = "",
-   Callback = function()
-    if Lighting:FindFirstChild("LightingLayers") then Lighting.LightingLayers:Destroy() end
-    if Lighting:FindFirstChild("SeaTerrorCC") then Lighting.SeaTerrorCC:Destroy() end
-    if Lighting:FindFirstChild("FantasySky") then Lighting.FantasySky:Destroy() end
-end
-})
-v496:AddButton({
-    Title = "Join Pirates Team",
-    Callback = function()
-        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("SetTeam", "Pirates")
-    end
-})
-v496:AddButton({
-    Title = "Join Marines Team",
-    Callback = function()
-        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("SetTeam", "Marines")
-    end
-})
-v496:AddButton({
-    Title = "Open Title Name",
-    Callback = function()
-        local v1209 = {[1] = "getTitles"}
-        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer(unpack(v1209))
-        game.Players.localPlayer.PlayerGui.Main.Titles.Visible = true
-    end
-})
-
-v496:AddButton({
-	Name = "FPS Boost",
-	Callback = function()
-		for _, v in ipairs(game:GetDescendants()) do
-			if v:IsA("BasePart") then
-				v.Material = Enum.Material.SmoothPlastic
-				v.Reflectance = 0
-			elseif v:IsA("Decal") or v:IsA("Texture") then
-				v:Destroy()
-			elseif v:IsA("ParticleEmitter") or v:IsA("Trail") then
-				v.Enabled = false
-			elseif v:IsA("Lighting") then
-				v.GlobalShadows = false
-				v.FogEnd = 1e10
-				v.Brightness = 0
-			end
-		end
-		setfpscap(60)
-	end
-})
 
 local v1218 = {
     "NOMOREHACK",
@@ -10767,15 +10832,6 @@ v496:AddToggle({
 
 	end
 })
-v496:AddButton({
-    Title = "Rejoin Server",
-    Callback = function()
-        game:GetService("TeleportService"):Teleport(game.PlaceId, game:GetService("Players").LocalPlayer)
-    end
-})
-v496:AddButton({Title = "Server Hop", Callback = function()
-    Hop()
-end})
 
 print("--[[Hop Server If You Meet Game Admin]]--")
 
@@ -10810,69 +10866,5 @@ task.spawn(function()
         end
     end
 end)
-
-local Players = game:GetService("Players")
-local TeleportService = game:GetService("TeleportService")
-local HttpService = game:GetService("HttpService")
-
-local Player = Players.LocalPlayer
-local PlaceId = game.PlaceId
-local JobId = game.JobId
-
-_G.AutoRejoin30m = false
-local RejoinRunning = false
-
--- ===== PEGAR SERVIDOR DIFERENTE =====
-function GetNewServer()
-    local Servers = {}
-    
-    local req = game:HttpGet(
-        "https://games.roblox.com/v1/games/"..PlaceId.."/servers/Public?sortOrder=Asc&limit=100"
-    )
-    
-    local data = HttpService:JSONDecode(req)
-
-    for _, server in pairs(data.data) do
-        if server.playing < server.maxPlayers and server.id ~= JobId then
-            table.insert(Servers, server.id)
-        end
-    end
-
-    if #Servers > 0 then
-        return Servers[math.random(1, #Servers)]
-    end
-end
-
--- ===== TOGGLE REDZLIB =====
-v496:AddToggle({
-    Name = "Anti-reset",
-    Description = "Server hop every 30 minutes",
-    Default = false,
-    Callback = function(Value)
-        _G.AutoRejoin30m = Value
-        
-        if Value and not RejoinRunning then
-            RejoinRunning = true
-            
-            task.spawn(function()
-                while _G.AutoRejoin30m do
-                    task.wait(1800) -- 30 minutos
-                    
-                    if not _G.AutoRejoin30m then break end
-                    
-                    local NewServer = GetNewServer()
-                    
-                    if NewServer then
-                        TeleportService:TeleportToPlaceInstance(PlaceId, NewServer, Player)
-                    else
-                        TeleportService:Teleport(PlaceId, Player)
-                    end
-                end
-                
-                RejoinRunning = false
-            end)
-        end
-    end
-})
 
 return redzlib
