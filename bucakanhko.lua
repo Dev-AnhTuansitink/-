@@ -2648,76 +2648,113 @@ credits:SetDesc("nigth mystic, astral, tboy kiddo etc")
 -- FIGHTING SHOP WITH AUTO TWEEN
 -- ========================================
 
-Shop:AddSection("Fighting Shop (Auto Tween)")
-
--- Helper để lấy HumanoidRootPart
+-- Hàm hỗ trợ lấy HumanoidRootPart
 local function GetHRP()
     return plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
 end
 
--- Hàm mua kèm bay
-local function BuyWithTween(styleName, styleKey, remoteName, extraArgs)
+-- Hàm dừng tất cả quá trình mua melee
+local function StopBuyMelee()
+    _G.BuyMeleeActive = false
+    _G.BuyMeleeTarget = nil
+    _G.BuyMeleeRemote = nil
+    _G.BuyMeleeStyle = nil
+end
+
+-- Hàm mua melee với tween (sử dụng _tp)
+local function BuyMeleeWithTween(styleKey, remoteName, extraArgs)
     -- Kiểm tra style có tồn tại ở Sea hiện tại không
     local posList = NPCS[styleKey] and NPCS[styleKey][SEA]
     if not posList then
-        NotificacaoNightMystic("❌ " .. styleName .. " không có ở Sea " .. SEA, 4)
+        NotificacaoNightMystic("❌ " .. styleKey .. " không có ở Sea " .. SEA, 4)
+        StopBuyMelee()
         return
     end
     local targetPos = posList[1]
-
-    NotificacaoNightMystic("✈️ Đang bay đến " .. styleName .. " ...", 3)
+    
+    _G.BuyMeleeTarget = targetPos
+    _G.BuyMeleeRemote = remoteName
+    _G.BuyMeleeStyle = styleKey
+    
+    NotificacaoNightMystic("✈️ Đang bay đến " .. styleKey .. " ...", 3)
     _tp(CFrame.new(targetPos))
-
+    
     -- Chờ đến gần NPC rồi mua
     task.spawn(function()
-        local hrp = GetHRP()
-        while hrp and (hrp.Position - targetPos).Magnitude > 8 do
-            task.wait(0.5)
-            hrp = GetHRP()
-        end
-        if hrp then
-            local success, err = pcall(function()
-                if extraArgs then
-                    -- Gọi remote với tham số phụ (nếu có)
-                    replicated.Remotes.CommF_:InvokeServer(remoteName, unpack(extraArgs))
-                    -- Nếu cần gọi thêm lần nữa (ví dụ Sharkman Karate), có thể xử lý riêng
+        while _G.BuyMeleeActive do
+            local hrp = GetHRP()
+            if hrp and (hrp.Position - targetPos).Magnitude <= 10 then
+                -- Đã đến nơi, thực hiện mua
+                local success, err = pcall(function()
+                    if extraArgs then
+                        replicated.Remotes.CommF_:InvokeServer(remoteName, unpack(extraArgs))
+                    else
+                        replicated.Remotes.CommF_:InvokeServer(remoteName)
+                    end
+                end)
+                if success then
+                    NotificacaoNightMystic("🎉 Mua " .. styleKey .. " thành công!", 4)
                 else
-                    replicated.Remotes.CommF_:InvokeServer(remoteName)
+                    NotificacaoNightMystic("❌ Lỗi khi mua: " .. tostring(err), 5)
                 end
-            end)
-            if success then
-                NotificacaoNightMystic("🎉 Mua " .. styleName .. " thành công!", 4)
+                StopBuyMelee()
+                break
+            elseif not hrp then
+                -- Nhân vật chết, chờ respawn
+                task.wait(1)
             else
-                NotificacaoNightMystic("❌ Lỗi khi mua: " .. tostring(err), 5)
+                task.wait(0.5)
             end
-        else
-            NotificacaoNightMystic("⚠️ Không thể đến NPC, hãy thử lại.", 3)
         end
     end)
 end
+Shop:AddSection("Fighting Shop (Auto Tween)")
 
--- Các nút mua
-Shop:AddButton({
-    Name = "Black Leg",
-    Callback = function()
-        BuyWithTween("Black Leg", "BlackLeg", "BuyBlackLeg")
+-- Hàm dừng tất cả (gọi khi tắt toggle)
+local function StopAllBuyMelee()
+    StopBuyMelee()
+    -- Nếu có các toggle khác, có thể tắt chúng ở đây, nhưng mỗi toggle tự quản lý
+end
+
+-- Black Leg
+Shop:AddToggle({
+    Title = "Buy Black Leg",
+    Value = false,
+    Callback = function(v)
+        StopBuyMelee()
+        if v then
+            _G.BuyMeleeActive = true
+            BuyMeleeWithTween("BlackLeg", "BuyBlackLeg")
+        end
     end
 })
 
-Shop:AddButton({
-    Name = "Fishman Karate",
-    Callback = function()
-        BuyWithTween("Fishman Karate", "FishmanKarate", "BuyFishmanKarate")
+-- Electro
+Shop:AddToggle({
+    Title = "Buy Electro",
+    Value = false,
+    Callback = function(v)
+        StopBuyMelee()
+        if v then
+            _G.BuyMeleeActive = true
+            BuyMeleeWithTween("Electro", "BuyElectro")
+        end
     end
 })
 
-Shop:AddButton({
-    Name = "Electro",
-    Callback = function()
-        BuyWithTween("Electro", "Electro", "BuyElectro")
+-- Fishman Karate
+Shop:AddToggle({
+    Title = "Buy Fishman Karate",
+    Value = false,
+    Callback = function(v)
+        StopBuyMelee()
+        if v then
+            _G.BuyMeleeActive = true
+            BuyMeleeWithTween("FishmanKarate", "BuyFishmanKarate")
+        end
     end
 })
-
+-- Giữ lại nút Dragon Breath (vì không phải mua từ NPC)
 Shop:AddButton({
     Name = "Dragon Breath",
     Callback = function()
@@ -2729,59 +2766,98 @@ Shop:AddButton({
         NotificacaoNightMystic("✅ Đã nhận Dragon Breath", 3)
     end
 })
-
-Shop:AddButton({
-    Name = "SuperHuman",
-    Callback = function()
-        BuyWithTween("Superhuman", "Superhuman", "BuySuperhuman")
+-- Superhuman
+Shop:AddToggle({
+    Title = "Buy Superhuman",
+    Value = false,
+    Callback = function(v)
+        StopBuyMelee()
+        if v then
+            _G.BuyMeleeActive = true
+            BuyMeleeWithTween("Superhuman", "BuySuperhuman")
+        end
     end
 })
 
-Shop:AddButton({
-    Name = "Death Step",
-    Callback = function()
-        BuyWithTween("Death Step", "DeathStep", "BuyDeathStep")
+-- Death Step
+Shop:AddToggle({
+    Title = "Buy Death Step",
+    Value = false,
+    Callback = function(v)
+        StopBuyMelee()
+        if v then
+            _G.BuyMeleeActive = true
+            BuyMeleeWithTween("DeathStep", "BuyDeathStep")
+        end
     end
 })
 
-Shop:AddButton({
-    Name = "Sharkman Karate",
-    Callback = function()
-        -- Sharkman Karate yêu cầu gọi 2 lần: true và không tham số
-        BuyWithTween("Sharkman Karate", "SharkmanKarate", "BuySharkmanKarate", {true})
-        -- Sau khi bay xong, nó sẽ gọi remote với tham số true
-        -- Bạn có thể thêm dòng gọi lần thứ hai nếu cần, nhưng thường lần đầu đã đủ
+-- Sharkman Karate
+Shop:AddToggle({
+    Title = "Buy Sharkman Karate",
+    Value = false,
+    Callback = function(v)
+        StopBuyMelee()
+        if v then
+            _G.BuyMeleeActive = true
+            BuyMeleeWithTween("SharkmanKarate", "BuySharkmanKarate", {true})
+        end
     end
 })
 
-Shop:AddButton({
-    Name = "Electric Claw",
-    Callback = function()
-        BuyWithTween("Electric Claw", "ElectricClaw", "BuyElectricClaw")
+-- Electric Claw
+Shop:AddToggle({
+    Title = "Buy Electric Claw",
+    Value = false,
+    Callback = function(v)
+        StopBuyMelee()
+        if v then
+            _G.BuyMeleeActive = true
+            BuyMeleeWithTween("ElectricClaw", "BuyElectricClaw")
+        end
     end
 })
 
-Shop:AddButton({
-    Name = "Dragon Talon",
-    Callback = function()
-        BuyWithTween("Dragon Talon", "DragonTalon", "BuyDragonTalon")
+-- Dragon Talon
+Shop:AddToggle({
+    Title = "Buy Dragon Talon",
+    Value = false,
+    Callback = function(v)
+        StopBuyMelee()
+        if v then
+            _G.BuyMeleeActive = true
+            BuyMeleeWithTween("DragonTalon", "BuyDragonTalon")
+        end
     end
 })
 
-Shop:AddButton({
-    Name = "God Human",
-    Callback = function()
-        BuyWithTween("God Human", "GodHuman", "BuyGodhuman")
+-- God Human
+Shop:AddToggle({
+    Title = "Buy God Human",
+    Value = false,
+    Callback = function(v)
+        StopBuyMelee()
+        if v then
+            _G.BuyMeleeActive = true
+            BuyMeleeWithTween("GodHuman", "BuyGodhuman")
+        end
     end
 })
 
-Shop:AddButton({
-    Name = "Sanguine Art",
-    Callback = function()
-        -- Sanguine Art cũng cần true trước
-        BuyWithTween("Sanguine Art", "SanguineArt", "BuySanguineArt", {true})
+-- Sanguine Art
+Shop:AddToggle({
+    Title = "Buy Sanguine Art",
+    Value = false,
+    Callback = function(v)
+        StopBuyMelee()
+        if v then
+            _G.BuyMeleeActive = true
+            BuyMeleeWithTween("SanguineArt", "BuySanguineArt", {true})
+        end
     end
 })
+
+
 Shop:AddSection("Sword")
 Shop:AddButton({
     Name = "Cutlass [ 1,000 Beli ]",
