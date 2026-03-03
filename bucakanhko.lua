@@ -247,6 +247,25 @@ else
 end
 
 Sea = World1 or World2 or World3
+-- Xác định SEA dạng số
+local SEA = (World1 and 1) or (World2 and 2) or (World3 and 3) or 0
+if SEA == 0 then
+    return
+end
+
+-- Bảng tọa độ NPC theo từng sea
+local NPCS = {
+    BlackLeg={[1]={Vector3.new(-988,13,3996)},[2]={Vector3.new(-4750.61, 35.08, -4846.33)},[3]={Vector3.new(-5043.64,371.35,-3183.40)}},
+    Electro={[1]={Vector3.new(-5382.27,14.15,-2150.34)},[2]={Vector3.new(-4863.81, 35.08, -4767.54)},[3]={Vector3.new(-4993.20,314.56,-3198.06)}},
+    FishmanKarate={[1]={Vector3.new(61584.35,18.85,988.89)},[2]={Vector3.new(-4960.04, 35.08, -4662.67)},[3]={Vector3.new(-5017.39,371.35,-3187.53)}},
+    Superhuman={[2]={Vector3.new(1378.05, 247.43, -5189.37)},[3]={Vector3.new(-4997.53,371.35,-3197.46)}},
+    DeathStep={[2]={Vector3.new(6360.04, 296.67, -6763.93)},[3]={Vector3.new(-4997.64,314.56,-3220.37)}},
+    SharkmanKarate={[2]={Vector3.new(-2602.40, 239.22, -10314.75)},[3]={Vector3.new(-4970.48,314.56,-3225.04)}},
+    ElectricClaw={[3]={Vector3.new(-10369.83,331.69,-10126.49)}},
+    DragonTalon={[3]={Vector3.new(5662.03,1211.32,858.60)}},
+    GodHuman={[3]={Vector3.new(-13775.56,334.66,-9877.67)}},
+    SanguineArt={[3]={Vector3.new(-16514.86,23.18,-190.84)}}
+}
 
 Marines = function()
     replicated.Remotes.CommF_:InvokeServer("SetTeam", "Marines")
@@ -676,6 +695,12 @@ _G.MaxBringMobs = _G.MaxBringMobs or 3 -- LIMITE DE MOBS
 
 _G.FarmPriorityElf = _G.FarmPriorityElf or false
 _G.FarmMastery_S   = _G.FarmMastery_S or false
+
+-- Biến cho auto buy melee
+_G.BuyMeleeActive = false   -- đang thực hiện mua melee không
+_G.BuyMeleeTarget = nil     -- vị trí cần bay đến (Vector3)
+_G.BuyMeleeRemote = nil     -- tên remote để InvokeServer
+_G.BuyMeleeStyle = nil      -- tên style để thông báo
 
 local TweenService = game:GetService("TweenService")
 local TweenInfoBring = TweenInfo.new(
@@ -1138,6 +1163,59 @@ Hop = function()
 			end;
 		end);
 	end;
+	-- Hàm lấy HumanoidRootPart (đề phòng biến Root không cập nhật)
+local function GetRoot()
+    return plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
+end
+
+-- Hàm mua fighting style với tween
+local function BuyMeleeWithTween(style, remote)
+    local posList = NPCS[style] and NPCS[style][SEA]
+    if not posList then
+        NotificacaoNightMystic("❌ " .. style .. " không có ở Sea " .. SEA)
+        _G.BuyMeleeActive = false
+        return
+    end
+    local targetPos = posList[1]
+    _G.BuyMeleeTarget = targetPos
+    _G.BuyMeleeRemote = remote
+    _G.BuyMeleeStyle = style
+
+    NotificacaoNightMystic("✈️ Đang bay đến " .. style)
+
+    -- Dùng hàm _tp có sẵn để bay đến vị trí
+    _tp(CFrame.new(targetPos))
+
+    -- Kiểm tra khi đến nơi và thực hiện mua
+    task.spawn(function()
+        while _G.BuyMeleeActive do
+            task.wait(0.5)
+            local hrp = GetRoot()
+            if hrp and (hrp.Position - targetPos).Magnitude <= 10 then
+                -- Đã đến gần NPC
+                local success, err = pcall(function()
+                    replicated.Remotes.CommF_:InvokeServer(remote)
+                end)
+                if success then
+                    NotificacaoNightMystic("🎉 Mua " .. style .. " thành công!")
+                else
+                    NotificacaoNightMystic("❌ Lỗi: " .. tostring(err))
+                end
+                _G.BuyMeleeActive = false
+                break
+            elseif not hrp then
+                -- Nhân vật chết, chờ respawn
+                task.wait(1)
+            end
+        end
+    end)
+end
+
+-- Hàm dừng tất cả quá trình mua
+local function StopBuyMelee()
+    _G.BuyMeleeActive = false
+    _G.BuyMeleeTarget = nil
+end
 local C = Instance.new("Part", workspace);
 C.Size = Vector3.new(1, 1, 1);
 C.Name = "Rip_Indra";
@@ -2566,74 +2644,142 @@ local credits = Discord:AddParagraph({
 })
 credits:SetDesc("nigth mystic, astral, tboy kiddo etc")
 
-Shop:AddSection("Fighting Shop")
+-- ========================================
+-- FIGHTING SHOP WITH AUTO TWEEN
+-- ========================================
+
+Shop:AddSection("Fighting Shop (Auto Tween)")
+
+-- Helper để lấy HumanoidRootPart
+local function GetHRP()
+    return plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
+end
+
+-- Hàm mua kèm bay
+local function BuyWithTween(styleName, styleKey, remoteName, extraArgs)
+    -- Kiểm tra style có tồn tại ở Sea hiện tại không
+    local posList = NPCS[styleKey] and NPCS[styleKey][SEA]
+    if not posList then
+        NotificacaoNightMystic("❌ " .. styleName .. " không có ở Sea " .. SEA, 4)
+        return
+    end
+    local targetPos = posList[1]
+
+    NotificacaoNightMystic("✈️ Đang bay đến " .. styleName .. " ...", 3)
+    _tp(CFrame.new(targetPos))
+
+    -- Chờ đến gần NPC rồi mua
+    task.spawn(function()
+        local hrp = GetHRP()
+        while hrp and (hrp.Position - targetPos).Magnitude > 8 do
+            task.wait(0.5)
+            hrp = GetHRP()
+        end
+        if hrp then
+            local success, err = pcall(function()
+                if extraArgs then
+                    -- Gọi remote với tham số phụ (nếu có)
+                    replicated.Remotes.CommF_:InvokeServer(remoteName, unpack(extraArgs))
+                    -- Nếu cần gọi thêm lần nữa (ví dụ Sharkman Karate), có thể xử lý riêng
+                else
+                    replicated.Remotes.CommF_:InvokeServer(remoteName)
+                end
+            end)
+            if success then
+                NotificacaoNightMystic("🎉 Mua " .. styleName .. " thành công!", 4)
+            else
+                NotificacaoNightMystic("❌ Lỗi khi mua: " .. tostring(err), 5)
+            end
+        else
+            NotificacaoNightMystic("⚠️ Không thể đến NPC, hãy thử lại.", 3)
+        end
+    end)
+end
+
+-- Các nút mua
 Shop:AddButton({
     Name = "Black Leg",
     Callback = function()
-        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("BuyBlackLeg")
+        BuyWithTween("Black Leg", "BlackLeg", "BuyBlackLeg")
     end
 })
+
 Shop:AddButton({
     Name = "Fishman Karate",
     Callback = function()
-        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("BuyFishmanKarate")
+        BuyWithTween("Fishman Karate", "FishmanKarate", "BuyFishmanKarate")
     end
 })
+
 Shop:AddButton({
     Name = "Electro",
     Callback = function()
-        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("BuyElectro")
+        BuyWithTween("Electro", "Electro", "BuyElectro")
     end
 })
+
 Shop:AddButton({
     Name = "Dragon Breath",
     Callback = function()
-        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("BlackbeardReward","DragonClaw","1")
-        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("BlackbeardReward","DragonClaw","2")
+        NotificacaoNightMystic("⏳ Đang nhận Dragon Breath...", 2)
+        pcall(function()
+            replicated.Remotes.CommF_:InvokeServer("BlackbeardReward","DragonClaw","1")
+            replicated.Remotes.CommF_:InvokeServer("BlackbeardReward","DragonClaw","2")
+        end)
+        NotificacaoNightMystic("✅ Đã nhận Dragon Breath", 3)
     end
 })
+
 Shop:AddButton({
     Name = "SuperHuman",
     Callback = function()
-        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("BuySuperhuman")
+        BuyWithTween("Superhuman", "Superhuman", "BuySuperhuman")
     end
 })
+
 Shop:AddButton({
     Name = "Death Step",
     Callback = function()
-        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("BuyDeathStep")
+        BuyWithTween("Death Step", "DeathStep", "BuyDeathStep")
     end
 })
+
 Shop:AddButton({
     Name = "Sharkman Karate",
     Callback = function()
-        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("BuySharkmanKarate",true)
-        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("BuySharkmanKarate")
+        -- Sharkman Karate yêu cầu gọi 2 lần: true và không tham số
+        BuyWithTween("Sharkman Karate", "SharkmanKarate", "BuySharkmanKarate", {true})
+        -- Sau khi bay xong, nó sẽ gọi remote với tham số true
+        -- Bạn có thể thêm dòng gọi lần thứ hai nếu cần, nhưng thường lần đầu đã đủ
     end
 })
+
 Shop:AddButton({
     Name = "Electric Claw",
     Callback = function()
-        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("BuyElectricClaw")
+        BuyWithTween("Electric Claw", "ElectricClaw", "BuyElectricClaw")
     end
 })
+
 Shop:AddButton({
     Name = "Dragon Talon",
     Callback = function()
-        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("BuyDragonTalon")
+        BuyWithTween("Dragon Talon", "DragonTalon", "BuyDragonTalon")
     end
 })
+
 Shop:AddButton({
     Name = "God Human",
     Callback = function()
-        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("BuyGodhuman")
+        BuyWithTween("God Human", "GodHuman", "BuyGodhuman")
     end
 })
+
 Shop:AddButton({
     Name = "Sanguine Art",
     Callback = function()
-        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("BuySanguineArt", true)
-        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("BuySanguineArt")
+        -- Sanguine Art cũng cần true trước
+        BuyWithTween("Sanguine Art", "SanguineArt", "BuySanguineArt", {true})
     end
 })
 Shop:AddSection("Sword")
