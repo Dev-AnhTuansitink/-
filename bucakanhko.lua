@@ -246,27 +246,6 @@ else
     plr:Kick("❌ Error Blox Fruits - World not recognized")
 end
 
-Sea = World1 or World2 or World3
--- Xác định SEA dạng số
-local SEA = (World1 and 1) or (World2 and 2) or (World3 and 3) or 0
-if SEA == 0 then
-    return
-end
-
--- Bảng tọa độ NPC theo từng sea
-local NPCS = {
-    BlackLeg={[1]={Vector3.new(-988,13,3996)},[2]={Vector3.new(-4750.61, 35.08, -4846.33)},[3]={Vector3.new(-5043.64,371.35,-3183.40)}},
-    Electro={[1]={Vector3.new(-5382.27,14.15,-2150.34)},[2]={Vector3.new(-4863.81, 35.08, -4767.54)},[3]={Vector3.new(-4993.20,314.56,-3198.06)}},
-    FishmanKarate={[1]={Vector3.new(61584.35,18.85,988.89)},[2]={Vector3.new(-4960.04, 35.08, -4662.67)},[3]={Vector3.new(-5017.39,371.35,-3187.53)}},
-    Superhuman={[2]={Vector3.new(1378.05, 247.43, -5189.37)},[3]={Vector3.new(-4997.53,371.35,-3197.46)}},
-    DeathStep={[2]={Vector3.new(6360.04, 296.67, -6763.93)},[3]={Vector3.new(-4997.64,314.56,-3220.37)}},
-    SharkmanKarate={[2]={Vector3.new(-2602.40, 239.22, -10314.75)},[3]={Vector3.new(-4970.48,314.56,-3225.04)}},
-    ElectricClaw={[3]={Vector3.new(-10369.83,331.69,-10126.49)}},
-    DragonTalon={[3]={Vector3.new(5662.03,1211.32,858.60)}},
-    GodHuman={[3]={Vector3.new(-13775.56,334.66,-9877.67)}},
-    SanguineArt={[3]={Vector3.new(-16514.86,23.18,-190.84)}}
-}
-
 Marines = function()
     replicated.Remotes.CommF_:InvokeServer("SetTeam", "Marines")
 end
@@ -2648,12 +2627,92 @@ credits:SetDesc("nigth mystic, astral, tboy kiddo etc")
 -- FIGHTING SHOP WITH AUTO TWEEN
 -- ========================================
 
--- Hàm hỗ trợ lấy HumanoidRootPart
+-- ========================================
+-- KHAI BÁO CÁC SERVICE CẦN THIẾT
+-- ========================================
+local Players = game:GetService("Players")
+local plr = Players.LocalPlayer
+local replicated = game:GetService("ReplicatedStorage")
+
+-- ========================================
+-- WORLD DETECTION
+-- ========================================
+local placeId = game.PlaceId
+local World1, World2, World3 = false, false, false
+
+if placeId == 2753915549 or placeId == 85211729168715 then
+    World1 = true
+elseif placeId == 4442272183 or placeId == 79091703265657 then
+    World2 = true
+elseif placeId == 7449423635 or placeId == 100117331123089 then
+    World3 = true
+else
+    plr:Kick("❌ Error Blox Fruits - World not recognized")
+end
+
+-- Xác định SEA dạng số
+local SEA = (World1 and 1) or (World2 and 2) or (World3 and 3) or 0
+if SEA == 0 then
+    return
+end
+
+-- ========================================
+-- DATA TỌA ĐỘ NPC
+-- ========================================
+local NPCS = {
+    BlackLeg = {
+        [1] = Vector3.new(-984, 17, 3990),
+        [2] = Vector3.new(-4753, 37, -4853),
+        [3] = Vector3.new(-5050, 374, -3183),
+    },
+    Electro = {
+        [1] = Vector3.new(-5383, 17, -2149),
+        [2] = Vector3.new(-4960, 39, -4663),
+        [3] = Vector3.new(-5000, 317, -3201),
+    },
+    FishmanKarate = {
+        [1] = Vector3.new(61586, 23, 987),
+        [2] = Vector3.new(-4870, 37, -4769),
+        [3] = Vector3.new(-5026, 375, -3196),
+    },
+    DragonClaw = {
+        [2] = Vector3.new(695, 189, 654),
+        [3] = Vector3.new(-4983, 374, -3213),
+    },
+    Superhuman = {
+        [2] = Vector3.new(1380, 250, -5188),
+        [3] = Vector3.new(-5007, 374, -3203),
+    },
+    DeathStep = {
+        [2] = Vector3.new(6352, 300, -6762),
+        [3] = Vector3.new(-5002, 318, -3225),
+    },
+    SharkmanKarate = {
+        [2] = Vector3.new(-2604, 242, -10318),
+        [3] = Vector3.new(-4969, 317, -3226),
+    },
+    ElectricClaw = {
+        [3] = Vector3.new(-10373, 334, -10136),
+    },
+    DragonTalon = {
+        [3] = Vector3.new(5659, 1214, 859),
+    },
+    Godhuman = {
+        [3] = Vector3.new(-13771, 337, -9881),
+    },
+    SanguineArt = {
+        [3] = Vector3.new(-16517, 26, -185),
+    },
+}
+
+-- ========================================
+-- FIGHTING SHOP WITH AUTO TWEEN
+-- ========================================
+
 local function GetHRP()
     return plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
 end
 
--- Hàm dừng tất cả quá trình mua melee
 local function StopBuyMelee()
     _G.BuyMeleeActive = false
     _G.BuyMeleeTarget = nil
@@ -2661,17 +2720,17 @@ local function StopBuyMelee()
     _G.BuyMeleeStyle = nil
 end
 
--- Hàm mua melee với tween (sử dụng _tp)
 local function BuyMeleeWithTween(styleKey, remoteName, extraArgs)
-    -- Kiểm tra style có tồn tại ở Sea hiện tại không
-    local posList = NPCS[styleKey] and NPCS[styleKey][SEA]
-    if not posList then
+    -- Lấy thẳng Vector3, không dùng [1]
+    local targetPos = NPCS[styleKey] and NPCS[styleKey][SEA] 
+    
+    if not targetPos then
         NotificacaoNightMystic("❌ " .. styleKey .. " không có ở Sea " .. SEA, 4)
         StopBuyMelee()
         return
     end
-    local targetPos = posList[1]
     
+    _G.BuyMeleeActive = true
     _G.BuyMeleeTarget = targetPos
     _G.BuyMeleeRemote = remoteName
     _G.BuyMeleeStyle = styleKey
@@ -2679,12 +2738,10 @@ local function BuyMeleeWithTween(styleKey, remoteName, extraArgs)
     NotificacaoNightMystic("✈️ Đang bay đến " .. styleKey .. " ...", 3)
     _tp(CFrame.new(targetPos))
     
-    -- Chờ đến gần NPC rồi mua
     task.spawn(function()
         while _G.BuyMeleeActive do
             local hrp = GetHRP()
-            if hrp and (hrp.Position - targetPos).Magnitude <= 10 then
-                -- Đã đến nơi, thực hiện mua
+            if hrp and (hrp.Position - targetPos).Magnitude <= 150 then
                 local success, err = pcall(function()
                     if extraArgs then
                         replicated.Remotes.CommF_:InvokeServer(remoteName, unpack(extraArgs))
@@ -2700,7 +2757,6 @@ local function BuyMeleeWithTween(styleKey, remoteName, extraArgs)
                 StopBuyMelee()
                 break
             elseif not hrp then
-                -- Nhân vật chết, chờ respawn
                 task.wait(1)
             else
                 task.wait(0.5)
@@ -2708,53 +2764,36 @@ local function BuyMeleeWithTween(styleKey, remoteName, extraArgs)
         end
     end)
 end
+
 Shop:AddSection("Fighting Shop (Auto Tween)")
 
--- Hàm dừng tất cả (gọi khi tắt toggle)
-local function StopAllBuyMelee()
-    StopBuyMelee()
-    -- Nếu có các toggle khác, có thể tắt chúng ở đây, nhưng mỗi toggle tự quản lý
-end
-
--- Black Leg
 Shop:AddToggle({
     Title = "Buy Black Leg",
     Value = false,
     Callback = function(v)
         StopBuyMelee()
-        if v then
-            _G.BuyMeleeActive = true
-            BuyMeleeWithTween("BlackLeg", "BuyBlackLeg")
-        end
+        if v then BuyMeleeWithTween("BlackLeg", "BuyBlackLeg") end
     end
 })
 
--- Electro
 Shop:AddToggle({
     Title = "Buy Electro",
     Value = false,
     Callback = function(v)
         StopBuyMelee()
-        if v then
-            _G.BuyMeleeActive = true
-            BuyMeleeWithTween("Electro", "BuyElectro")
-        end
+        if v then BuyMeleeWithTween("Electro", "BuyElectro") end
     end
 })
 
--- Fishman Karate
 Shop:AddToggle({
     Title = "Buy Fishman Karate",
     Value = false,
     Callback = function(v)
         StopBuyMelee()
-        if v then
-            _G.BuyMeleeActive = true
-            BuyMeleeWithTween("FishmanKarate", "BuyFishmanKarate")
-        end
+        if v then BuyMeleeWithTween("FishmanKarate", "BuyFishmanKarate") end
     end
 })
--- Giữ lại nút Dragon Breath (vì không phải mua từ NPC)
+
 Shop:AddButton({
     Name = "Dragon Breath",
     Callback = function()
@@ -2766,96 +2805,71 @@ Shop:AddButton({
         NotificacaoNightMystic("✅ Đã nhận Dragon Breath", 3)
     end
 })
--- Superhuman
+
 Shop:AddToggle({
     Title = "Buy Superhuman",
     Value = false,
     Callback = function(v)
         StopBuyMelee()
-        if v then
-            _G.BuyMeleeActive = true
-            BuyMeleeWithTween("Superhuman", "BuySuperhuman")
-        end
+        if v then BuyMeleeWithTween("Superhuman", "BuySuperhuman") end
     end
 })
 
--- Death Step
 Shop:AddToggle({
     Title = "Buy Death Step",
     Value = false,
     Callback = function(v)
         StopBuyMelee()
-        if v then
-            _G.BuyMeleeActive = true
-            BuyMeleeWithTween("DeathStep", "BuyDeathStep")
-        end
+        if v then BuyMeleeWithTween("DeathStep", "BuyDeathStep") end
     end
 })
 
--- Sharkman Karate
 Shop:AddToggle({
     Title = "Buy Sharkman Karate",
     Value = false,
     Callback = function(v)
         StopBuyMelee()
-        if v then
-            _G.BuyMeleeActive = true
-            BuyMeleeWithTween("SharkmanKarate", "BuySharkmanKarate", {true})
-        end
+        if v then BuyMeleeWithTween("SharkmanKarate", "BuySharkmanKarate", {true}) end
     end
 })
 
--- Electric Claw
 Shop:AddToggle({
     Title = "Buy Electric Claw",
     Value = false,
     Callback = function(v)
         StopBuyMelee()
-        if v then
-            _G.BuyMeleeActive = true
-            BuyMeleeWithTween("ElectricClaw", "BuyElectricClaw")
-        end
+        if v then BuyMeleeWithTween("ElectricClaw", "BuyElectricClaw") end
     end
 })
 
--- Dragon Talon
 Shop:AddToggle({
     Title = "Buy Dragon Talon",
     Value = false,
     Callback = function(v)
         StopBuyMelee()
-        if v then
-            _G.BuyMeleeActive = true
-            BuyMeleeWithTween("DragonTalon", "BuyDragonTalon")
-        end
+        if v then BuyMeleeWithTween("DragonTalon", "BuyDragonTalon") end
     end
 })
 
--- God Human
 Shop:AddToggle({
     Title = "Buy God Human",
     Value = false,
     Callback = function(v)
         StopBuyMelee()
-        if v then
-            _G.BuyMeleeActive = true
-            BuyMeleeWithTween("GodHuman", "BuyGodhuman")
-        end
+        -- FIX TÊN: GodHuman -> Godhuman
+        if v then BuyMeleeWithTween("Godhuman", "BuyGodhuman") end
     end
 })
 
--- Sanguine Art
 Shop:AddToggle({
     Title = "Buy Sanguine Art",
     Value = false,
     Callback = function(v)
         StopBuyMelee()
-        if v then
-            _G.BuyMeleeActive = true
-            BuyMeleeWithTween("SanguineArt", "BuySanguineArt", {true})
-        end
+        if v then BuyMeleeWithTween("SanguineArt", "BuySanguineArt", {true}) end
     end
 })
+
 
 
 Shop:AddSection("Sword")
