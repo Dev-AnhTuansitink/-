@@ -1,8 +1,43 @@
+--join team hải quân
+if not game:IsLoaded() then
+	game.Loaded:Wait()
+end
+
+game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("SetTeam", "Marines")
 --[[
     Abacaxi Hub - Optimized Version
     Performance & Code Quality Improvements
 ]]
-
+local RS=game.ReplicatedStorage
+local N=require(RS.Modules.Net)
+local C=require(RS.Modules.CombatUtil)
+local P=game.Players.LocalPlayer
+local hit=N:RemoteEvent("RegisterHit",true)
+local atk=RS.Modules.Net["RE/RegisterAttack"]
+task.spawn(function()
+while task.wait() do
+local c=P.Character if not c then continue end
+local r=c:FindFirstChild("HumanoidRootPart")
+local t=c:FindFirstChildOfClass("Tool")
+if not (r and t) then continue end
+local id=tostring(P.UserId):sub(2,4)..tostring(coroutine.running()):sub(11,15)
+local didy=false
+for _,m in ipairs(workspace.Enemies:GetChildren()) do
+local h,u=m:FindFirstChild("HumanoidRootPart"),m:FindFirstChild("Humanoid")
+if h and u and u.Health>0 and (h.Position-r.Position).Magnitude<=60 then
+if not didy then atk:FireServer() didy=true end
+hit:FireServer(h,{{m,h}},nil,nil,id)
+end
+end
+for _,plr in ipairs(game.Players:GetPlayers()) do
+if plr~=P and plr.Character then
+local m=plr.Character
+local h=m:FindFirstChild("HumanoidRootPart")
+local u=m:FindFirstChild("Humanoid")
+if h and u and u.Health>0 and (h.Position-r.Position).Magnitude<=60 then
+if not didy then atk:FireServer() didy=true end
+hit:FireServer(h,{{m,h}},nil,nil,id) end end end end end)
+-- code by HNC
 -- Cache all services at start for better performance
 local Services = setmetatable({}, {
     __index = function(self, serviceName)
@@ -12,7 +47,7 @@ local Services = setmetatable({}, {
     end
 })
 
-local function NotificacaoNightMystic(titulo, mensagem)
+local function NotificacaoTuanDz(titulo, mensagem)
     local success = pcall(function()
         local TweenService = Services.TweenService
         local CoreGui = Services.CoreGui
@@ -93,11 +128,11 @@ local function NotificacaoNightMystic(titulo, mensagem)
     end)
     
     if not success then
-        warn("[NatAov] Erro ao exibir notificação")
+        warn("[NatAov] lỗi")
     end
 end
 
-NotificacaoNightMystic("NatAov Hub", "Script carregado com sucesso!")
+NotificacaoTuanDz("NatAov Hub", "Script load success!")
 
 -- ========================================
 -- SAVE SYSTEM (Optimized)
@@ -172,13 +207,6 @@ end)
 -- ========================================
 -- AUTO TEAM & LIGHTING
 -- ========================================
-local desiredTeam = "Marines"
-
-if not player.Team or player.Team.Name ~= desiredTeam then
-    pcall(function()
-        ReplicatedStorage.Remotes.CommF_:InvokeServer("SetTeam", desiredTeam)
-    end)
-end
 
 local Lighting = Services.Lighting
 
@@ -1151,7 +1179,7 @@ end
 local function BuyMeleeWithTween(style, remote)
     local posList = NPCS[style] and NPCS[style][SEA]
     if not posList then
-        NotificacaoNightMystic("❌ " .. style .. " không có ở Sea " .. SEA)
+        NotificacaoTuanDz("❌ " .. style .. " không có ở Sea " .. SEA)
         _G.BuyMeleeActive = false
         return
     end
@@ -1160,7 +1188,7 @@ local function BuyMeleeWithTween(style, remote)
     _G.BuyMeleeRemote = remote
     _G.BuyMeleeStyle = style
 
-    NotificacaoNightMystic("✈️ Đang bay đến " .. style)
+    NotificacaoTuanDz("✈️ Đang bay đến " .. style)
 
     -- Dùng hàm _tp có sẵn để bay đến vị trí
     _tp(CFrame.new(targetPos))
@@ -1176,9 +1204,9 @@ local function BuyMeleeWithTween(style, remote)
                     replicated.Remotes.CommF_:InvokeServer(remote)
                 end)
                 if success then
-                    NotificacaoNightMystic("🎉 Mua " .. style .. " thành công!")
+                    NotificacaoTuanDz("🎉 Mua " .. style .. " thành công!")
                 else
-                    NotificacaoNightMystic("❌ Lỗi: " .. tostring(err))
+                    NotificacaoTuanDz("❌ Lỗi: " .. tostring(err))
                 end
                 _G.BuyMeleeActive = false
                 break
@@ -2823,7 +2851,7 @@ end
 local function BuyMeleeWithTween(styleKey, remoteName, extraArgs)
     local targetPos = NPCS[styleKey] and NPCS[styleKey][SEA]
     if not targetPos then
-        NotificacaoNightMystic("❌ " .. styleKey .. " không có ở Sea " .. SEA, 4)
+        NotificacaoTuanDz("❌ " .. styleKey .. " không có ở Sea " .. SEA, 4)
         StopBuyMelee()
         return
     end
@@ -2834,7 +2862,7 @@ local function BuyMeleeWithTween(styleKey, remoteName, extraArgs)
     _G.BuyMeleeRemote = remoteName
     _G.BuyMeleeStyle = styleKey
 
-    NotificacaoNightMystic("✈️ Đang bay đến " .. styleKey .. " ...", 3)
+    NotificacaoTuanDz("✈️ Đang bay đến " .. styleKey .. " ...", 3)
 
     task.spawn(function()
         while _G.BuyMeleeActive do
@@ -2855,9 +2883,9 @@ local function BuyMeleeWithTween(styleKey, remoteName, extraArgs)
                         end
                     end)
                     if success then
-                        NotificacaoNightMystic("🎉 Mua " .. styleKey .. " thành công!", 4)
+                        NotificacaoTuanDz("🎉 Mua " .. styleKey .. " thành công!", 4)
                     else
-                        NotificacaoNightMystic("❌ Lỗi khi mua: " .. tostring(err), 5)
+                        NotificacaoTuanDz("❌ Lỗi khi mua: " .. tostring(err), 5)
                     end
                     StopBuyMelee()
                     break
@@ -2908,12 +2936,12 @@ Shop:AddToggle({
 Shop:AddButton({
     Name = "Dragon Breath",
     Callback = function()
-        NotificacaoNightMystic("⏳ Đang nhận Dragon Breath...", 2)
+        NotificacaoTuanDz("⏳ Đang nhận Dragon Breath...", 2)
         pcall(function()
             replicated.Remotes.CommF_:InvokeServer("BlackbeardReward","DragonClaw","1")
             replicated.Remotes.CommF_:InvokeServer("BlackbeardReward","DragonClaw","2")
         end)
-        NotificacaoNightMystic("✅ Đã nhận Dragon Breath", 3)
+        NotificacaoTuanDz("✅ Đã nhận Dragon Breath", 3)
     end
 })
 
@@ -4628,11 +4656,11 @@ spawn(function()
 	end;
 end);
 end
-Setting:AddSection({"Manual Save"})
+Setting:AddSection({"Save Config"})
 
 Setting:AddButton({
-    Name = "Salvar Configurações Agora",
-    Description = "Cria um backup manual das tuas opções atuais",
+    Name = "Lưu config ngay",
+    Description = "ai hỏi á?",
     Callback = function()
         -- Verifica se a função existe antes de chamar
         if SaveSettings then
@@ -4640,19 +4668,19 @@ Setting:AddButton({
             
             -- Notificação Universal (Funciona sem a lib Fluent)
             game.StarterGui:SetCore("SendNotification", {
-                Title = "Abacaxi Hub",
-                Text = "Configurações salvas com sucesso!",
+                Title = "kid 2007",
+                Text = "Lưu thành công!",
                 Duration = 5
             })
         else
-            warn("Erro: Função SaveSettings não encontrada!")
+            warn("looic lưu")
         end
     end
 })
 
 Setting:AddButton({
-    Name = "Resetar Configurações",
-    Description = "Apaga o ficheiro de save e volta ao padrão",
+    Name = "Đặt lại config",
+    Description = "Xóa tập tin lưu và khôi phục cài đặt mặc định.",
     Callback = function()
         -- Usa a variável FullPath que foi definida lá no topo do script
         if isfile and isfile(FullPath) then
@@ -4661,14 +4689,14 @@ Setting:AddButton({
             
             -- Notificação Universal
             game.StarterGui:SetCore("SendNotification", {
-                Title = "Abacaxi Hub",
-                Text = "Configurações resetadas! Re-execute o script.",
+                Title = "Rauma-nemchua",
+                Text = "xoá thành công",
                 Duration = 5
             })
         else
             game.StarterGui:SetCore("SendNotification", {
-                Title = "Abacaxi Hub",
-                Text = "Nenhum arquivo de save encontrado para apagar.",
+                Title = "Thần tày",
+                Text = "Không tìm thấy tệp lưu nào để xóa.",
                 Duration = 3
             })
         end
@@ -4947,9 +4975,9 @@ local ToolAbilities = Net:WaitForChild("RF/JobToolAbilities")
 -- =========================================================
 -- CONFIGURAÇÃO DA NOTIFICAÇÃO CUSTOMIZADA (FULL BLACK)
 -- =========================================================
-local LogoID = "rbxassetid://115377474207871"
+local LogoID = "rbxassetid://120488231660846"
 
-local function NotifyNightMystic(texto)
+local function NotificacaoTuandz2(texto)
     task.spawn(function()
         local guiName = "NightMysticNotify"
         local existingGui = CoreGui:FindFirstChild(guiName)
@@ -5149,7 +5177,7 @@ task.spawn(function()
                         equippedTool = rodInBag
                     else
 
-                        NotifyNightMystic("please equip:" .. tostring(_G.SelectedRod))
+                        NotificacaoTuandz2("please equip:" .. tostring(_G.SelectedRod))
                         return -- Para a execução aqui para não dar erro tentando pescar sem vara
                     end
                 end
@@ -5180,7 +5208,7 @@ task.spawn(function()
                         FishingRequest:InvokeServer("Catch", 1)
                         
                         -- [[ NOTIFICAÇÃO PRETA AO PEGAR PEIXE ]]
-                        NotifyNightMystic("New item caught")
+                        NotificacaoTuandz2("New item caught")
                     end
                 end
             end)
@@ -7563,7 +7591,7 @@ Maestry:AddSection({"Mastery"})
 
 local islands = { "Cake", "Bone" }
 Maestry:AddDropdown({
-    Title = "Select Método",
+    Title = "Select island",
     Description = "",
     Options= islands,
     Default = "Cake",
@@ -12455,6 +12483,6 @@ end)
 _ENV.rz_FastAttack = FastAttack
 FastAttackModule.FastAttack = FastAttack
 
-NotificacaoNightMystic("NatAov Hub", "✅ Todos os sistemas carregados!")
+NotificacaoTuanDz("NatAov Hub", "✅ fast attack loaded!")
 
 return FastAttackModulem
