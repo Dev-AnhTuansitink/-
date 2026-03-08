@@ -2615,16 +2615,16 @@ Discord:AddDiscordInvite({
     Name = "NatAov Hub",
     Description = "Join for support and updates",
     Logo = "rbxassetid://120488231660846",
-    Invite = "https://discord.gg/F2NXMVZ3VE"
+    Invite = "https://discord.gg/https://discord.gg/DPZ7zqar"
 })
 local credits = Discord:AddParagraph({
-    Title = "Credits For Someone Peoples",
+    Title = "sít seven 36 cân rau má",
     Desc = ""
 })
-credits:SetDesc("nigth mystic, astral, tboy kiddo etc")
+credits:SetDesc("thangownerbitay")
 
 -- ========================================
--- FIGHTING SHOP WITH AUTO TWEEN
+-- FIGHTING SHOP WITH AUTO TWEEN (NOCLIP + STABILIZE)
 -- ========================================
 
 -- ========================================
@@ -2633,6 +2633,8 @@ credits:SetDesc("nigth mystic, astral, tboy kiddo etc")
 local Players = game:GetService("Players")
 local plr = Players.LocalPlayer
 local replicated = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
 
 -- ========================================
 -- WORLD DETECTION
@@ -2706,65 +2708,174 @@ local NPCS = {
 }
 
 -- ========================================
--- FIGHTING SHOP WITH AUTO TWEEN
+-- HÀM HỖ TRỢ: NOCLIP, STABILIZE, TWEEN
 -- ========================================
 
+-- Lấy HumanoidRootPart
 local function GetHRP()
     return plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
 end
 
+-- Noclip: vô hiệu hóa va chạm các bộ phận
+local function setNoclip(state)
+    _G.noclipEnabled = state
+    if state then
+        -- Kết nối 1 lần, chạy liên tục
+        if not _G.noclipConnection then
+            _G.noclipConnection = RunService.Stepped:Connect(function()
+                if _G.noclipEnabled and plr.Character then
+                    for _, part in pairs(plr.Character:GetDescendants()) do
+                        if part:IsA("BasePart") and part.CanCollide then
+                            part.CanCollide = false
+                        end
+                    end
+                end
+            end)
+        end
+    else
+        if _G.noclipConnection then
+            _G.noclipConnection:Disconnect()
+            _G.noclipConnection = nil
+        end
+    end
+end
+
+-- Giữ người chơi ổn định: PlatformStand + chống rơi
+local function stabilizeCharacter(stabilize)
+    local char = plr.Character
+    if not char then return end
+    local humanoid = char:FindFirstChildOfClass("Humanoid")
+    if humanoid then
+        humanoid.PlatformStand = stabilize
+        humanoid.AutoRotate = not stabilize
+    end
+    if stabilize then
+        -- Chống rơi: giữ vận tốc Y không âm
+        if _G.stabilizeLoop then _G.stabilizeLoop:Disconnect() end
+        _G.stabilizeLoop = RunService.Heartbeat:Connect(function()
+            local hrp = GetHRP()
+            if hrp and hrp.Velocity.Y < -5 then
+                hrp.Velocity = Vector3.new(hrp.Velocity.X, 0, hrp.Velocity.Z)
+            end
+        end)
+    else
+        if _G.stabilizeLoop then
+            _G.stabilizeLoop:Disconnect()
+            _G.stabilizeLoop = nil
+        end
+    end
+end
+
+-- Hủy tween hiện tại
+local function cancelCurrentTween()
+    if _G.currentTween then
+        _G.currentTween:Cancel()
+        _G.currentTween = nil
+    end
+end
+
+-- Tween đến vị trí (tự động bật noclip & stabilize)
+local function tweenTo(targetPos)
+    local hrp = GetHRP()
+    if not hrp then return end
+    cancelCurrentTween()
+
+    -- Bật noclip và giữ ổn định
+    setNoclip(true)
+    stabilizeCharacter(true)
+
+    local distance = (hrp.Position - targetPos).Magnitude
+    local speed = 300  -- có thể điều chỉnh
+    local time = distance / speed
+
+    local tweenInfo = TweenInfo.new(
+        time,
+        Enum.EasingStyle.Linear,
+        Enum.EasingDirection.Out,
+        0, false, 0
+    )
+    local goal = {CFrame = CFrame.new(targetPos)}
+    _G.currentTween = TweenService:Create(hrp, tweenInfo, goal)
+
+    -- Khi tween hoàn thành hoặc bị hủy, tắt noclip & stabilize
+    _G.currentTween.Completed:Connect(function()
+        setNoclip(false)
+        stabilizeCharacter(false)
+    end)
+
+    _G.currentTween:Play()
+end
+
+-- Dừng toàn bộ tiến trình mua
 local function StopBuyMelee()
+    cancelCurrentTween()
+    setNoclip(false)
+    stabilizeCharacter(false)
     _G.BuyMeleeActive = false
     _G.BuyMeleeTarget = nil
     _G.BuyMeleeRemote = nil
     _G.BuyMeleeStyle = nil
 end
 
+-- ========================================
+-- HÀM MUA CHÍNH (AUTO TWEEN)
+-- ========================================
 local function BuyMeleeWithTween(styleKey, remoteName, extraArgs)
-    -- Lấy thẳng Vector3, không dùng [1]
-    local targetPos = NPCS[styleKey] and NPCS[styleKey][SEA] 
-    
+    local targetPos = NPCS[styleKey] and NPCS[styleKey][SEA]
     if not targetPos then
         NotificacaoNightMystic("❌ " .. styleKey .. " không có ở Sea " .. SEA, 4)
         StopBuyMelee()
         return
     end
-    
+
+    StopBuyMelee()  -- dừng cái cũ
     _G.BuyMeleeActive = true
     _G.BuyMeleeTarget = targetPos
     _G.BuyMeleeRemote = remoteName
     _G.BuyMeleeStyle = styleKey
-    
+
     NotificacaoNightMystic("✈️ Đang bay đến " .. styleKey .. " ...", 3)
-    _tp(CFrame.new(targetPos))
-    
+
     task.spawn(function()
         while _G.BuyMeleeActive do
             local hrp = GetHRP()
-            if hrp and (hrp.Position - targetPos).Magnitude <= 150 then
-                local success, err = pcall(function()
-                    if extraArgs then
-                        replicated.Remotes.CommF_:InvokeServer(remoteName, unpack(extraArgs))
+            if hrp then
+                local dist = (hrp.Position - targetPos).Magnitude
+                if dist <= 150 then
+                    -- Đã đến nơi, dừng tween và thử mua
+                    cancelCurrentTween()
+                    setNoclip(false)
+                    stabilizeCharacter(false)
+
+                    local success, err = pcall(function()
+                        if extraArgs then
+                            replicated.Remotes.CommF_:InvokeServer(remoteName, unpack(extraArgs))
+                        else
+                            replicated.Remotes.CommF_:InvokeServer(remoteName)
+                        end
+                    end)
+                    if success then
+                        NotificacaoNightMystic("🎉 Mua " .. styleKey .. " thành công!", 4)
                     else
-                        replicated.Remotes.CommF_:InvokeServer(remoteName)
+                        NotificacaoNightMystic("❌ Lỗi khi mua: " .. tostring(err), 5)
                     end
-                end)
-                if success then
-                    NotificacaoNightMystic("🎉 Mua " .. styleKey .. " thành công!", 4)
+                    StopBuyMelee()
+                    break
                 else
-                    NotificacaoNightMystic("❌ Lỗi khi mua: " .. tostring(err), 5)
+                    -- Nếu chưa có tween hoặc tween đã kết thúc/hỏng, tạo lại
+                    if not _G.currentTween or _G.currentTween.PlaybackState == Enum.PlaybackState.Cancelled or _G.currentTween.PlaybackState == Enum.PlaybackState.Completed then
+                        tweenTo(targetPos)
+                    end
                 end
-                StopBuyMelee()
-                break
-            elseif not hrp then
-                task.wait(1)
-            else
-                task.wait(0.5)
             end
+            task.wait(1)  -- kiểm tra mỗi giây
         end
     end)
 end
 
+-- ========================================
+-- CÁC TOGGLE TRONG SHOP
+-- ========================================
 Shop:AddSection("Fighting Shop (Auto Tween)")
 
 Shop:AddToggle({
@@ -2856,7 +2967,6 @@ Shop:AddToggle({
     Value = false,
     Callback = function(v)
         StopBuyMelee()
-        -- FIX TÊN: GodHuman -> Godhuman
         if v then BuyMeleeWithTween("Godhuman", "BuyGodhuman") end
     end
 })
@@ -2869,8 +2979,6 @@ Shop:AddToggle({
         if v then BuyMeleeWithTween("SanguineArt", "BuySanguineArt", {true}) end
     end
 })
-
-
 
 Shop:AddSection("Sword")
 Shop:AddButton({
