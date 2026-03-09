@@ -5114,7 +5114,7 @@ Others:AddDropdown({
 -- 3. TOGGLE AUTO BUY BAIT
 Others:AddToggle({
     Name = "Tự động mua mồi",
-    Description = "Crafta a isca selecionada automaticamente",
+    Description = "",
     -- Carrega se estava ligado
     Default = GetSetting("Fish_AutoBuyBait", false),
     Callback = function(Value)
@@ -5286,7 +5286,7 @@ end)
 -- 7. AUTO SELL FISH
 Others:AddToggle({
     Name = "Tự Động Bán Cá",
-    Description = "Vende peixes automaticamente",
+    Description = "",
     -- Carrega se estava ligado
     Default = GetSetting("Fish_AutoSell", false),
     Callback = function(Value)
@@ -6564,7 +6564,7 @@ Event:AddButton({
 });
 Event:AddToggle({
     Name = "Di chuyển đến Frozen Dimension",
-    Description = "turn on for teleport to frozen dimension and start the leviathan gate",
+    Description = "",
     -- 1. Carrega se o teleporte estava ativo
     Default = GetSetting("FrozenTP_Save", false),
     Callback = function(I)
