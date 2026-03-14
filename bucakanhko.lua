@@ -4883,7 +4883,7 @@ Setting:AddButton({
     end
 })
 --------------------------------------------------------------------
--- SERVICES
+--[[ SERVICES
 --------------------------------------------------------------------
 local Players = game:GetService("Players")
 local VirtualInputManager = game:GetService("VirtualInputManager")
@@ -5140,7 +5140,7 @@ Setting:AddToggle({
 
 	end
 
-})
+}) ]]
 Setting:AddToggle({
 	Name = "Tự tấn công",
 	Description = "",
