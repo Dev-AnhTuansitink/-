@@ -2826,7 +2826,7 @@ local function tweenTo(targetPos)
     stabilizeCharacter(true)
 
     local distance = (hrp.Position - targetPos).Magnitude
-    local speed = 300
+    local speed = 200
     local time = distance / speed
 
     if time < 0.05 then
@@ -4885,221 +4885,6 @@ Setting:AddButton({
 --------------------------------------------------------------------
 -- SERVICES
 --------------------------------------------------------------------
---[[ local Players = game:GetService("Players")
-local VirtualInputManager = game:GetService("VirtualInputManager")
-
-local player = Players.LocalPlayer
-
---------------------------------------------------------------------
--- VARIABLES
---------------------------------------------------------------------
-getgenv().BuddhaFarm = false
-getgenv().BuddhaActive = false
-getgenv().BuddhaTransforming = false
-
---------------------------------------------------------------------
--- CHECK FARM STATE
---------------------------------------------------------------------
-local function IsAnyFarmRunning()
-
-	return _G.Level
-	or _G.AutoFarm_Bone
-	or _G.AutoFarm_Cake
-	or _G.AutoTyrant
-	or _G.AutoFarmNear
-
-end
-
---------------------------------------------------------------------
--- ACTIVATE BUDDHA
---------------------------------------------------------------------
-local function ActivateBuddhaForm()
-
-	if getgenv().BuddhaActive then return end
-	if getgenv().BuddhaTransforming then return end
-	if not IsBuddhaFruit() then return end
-
-	local char = player.Character
-	local backpack = player.Backpack
-
-	if not char or not backpack then return end
-
-	getgenv().BuddhaTransforming = true
-
-	local tool = char:FindFirstChildOfClass("Tool")
-	if tool then
-		tool.Parent = backpack
-	end
-
-	task.wait(0.1)
-
-	local fruit
-
-	for _,v in pairs(backpack:GetChildren()) do
-		if v:IsA("Tool") and (v.ToolTip == "Blox Fruit" or v.Name:find("Fruit")) then
-			fruit = v
-			break
-		end
-	end
-
-	if fruit then
-		char.Humanoid:EquipTool(fruit)
-	end
-
-	task.wait(0.3)
-
-	VirtualInputManager:SendKeyEvent(true,"Z",false,game)
-	task.wait(0.05)
-	VirtualInputManager:SendKeyEvent(false,"Z",false,game)
-
-	task.wait(0.5)
-
-	getgenv().BuddhaActive = true
-	getgenv().BuddhaTransforming = false
-
-	print("Buddha Activated")
-
-end
-
---------------------------------------------------------------------
--- DEACTIVATE BUDDHA
---------------------------------------------------------------------
-local function DeactivateBuddha()
-
-	if not getgenv().BuddhaActive then return end
-
-	local char = player.Character
-	local backpack = player.Backpack
-
-	if not char or not backpack then return end
-
-	local tool = char:FindFirstChildOfClass("Tool")
-	if tool then
-		tool.Parent = backpack
-	end
-
-	task.wait(0.1)
-
-	local fruit
-
-	for _,v in pairs(backpack:GetChildren()) do
-		if v:IsA("Tool") and (v.ToolTip == "Blox Fruit" or v.Name:find("Fruit")) then
-			fruit = v
-			break
-		end
-	end
-
-	if fruit then
-		char.Humanoid:EquipTool(fruit)
-	end
-
-	task.wait(0.3)
-
-	VirtualInputManager:SendKeyEvent(true,"Z",false,game)
-	task.wait(0.05)
-	VirtualInputManager:SendKeyEvent(false,"Z",false,game)
-
-	getgenv().BuddhaActive = false
-
-	print("Buddha Deactivated")
-
-end
-
---------------------------------------------------------------------
--- AUTO BUDDHA LOOP
---------------------------------------------------------------------
-task.spawn(function()
-
-	while task.wait(0.5) do
-
-		if not getgenv().BuddhaFarm then
-			continue
-		end
-
-		if not IsAnyFarmRunning() then
-			continue
-		end
-
-		if getgenv().BuddhaTransforming then
-			continue
-		end
-
-		if not getgenv().BuddhaActive then
-			ActivateBuddhaForm()
-		end
-
-	end
-
-end)
-
---------------------------------------------------------------------
--- RESPAWN HANDLER
---------------------------------------------------------------------
-player.CharacterAdded:Connect(function(char)
-
-	getgenv().BuddhaActive = false
-
-	local hum = char:WaitForChild("Humanoid",10)
-
-	if hum then
-		hum.Died:Connect(function()
-
-			if getgenv().BuddhaFarm and IsAnyFarmRunning() then
-				getgenv().BuddhaTransforming = true
-				getgenv().BuddhaActive = false
-				print("Player died - waiting respawn")
-			end
-
-		end)
-	end
-
-	task.wait(1)
-
-	if getgenv().BuddhaFarm and IsAnyFarmRunning() then
-		ActivateBuddhaForm()
-	end
-
-end)
-
---------------------------------------------------------------------
--- UI TOGGLE
---------------------------------------------------------------------
-Farm:AddToggle({
-
-	Name = "Farm với trái phật",
-	Description = "tự hoá z phật khi farm",
-	Default = false,
-
-	Callback = function(v)
-
-		getgenv().BuddhaFarm = v
-
-		if v then
-
-			print("Buddha Farm Enabled")
-
-			if IsAnyFarmRunning() then
-				task.spawn(function()
-					ActivateBuddhaForm()
-				end)
-			end
-
-		else
-
-			print("Buddha Farm Disabled")
-
-			task.spawn(function()
-				DeactivateBuddha()
-			end)
-
-		end
-
-	end
-
-})
---------------------------------------------------------------------
--- SERVICES
---------------------------------------------------------------------
 local Players = game:GetService("Players")
 local VirtualInputManager = game:GetService("VirtualInputManager")
 
@@ -5116,12 +4901,63 @@ getgenv().BuddhaTransforming = false
 -- CHECK FARM STATE
 --------------------------------------------------------------------
 local function IsAnyFarmRunning()
-
 	return _G.Level
 	or _G.AutoFarm_Bone
 	or _G.AutoFarm_Cake
 	or _G.AutoTyrant
 	or _G.AutoFarmNear
+end
+
+--------------------------------------------------------------------
+-- CHECK BUDDHA FRUIT
+--------------------------------------------------------------------
+local function IsBuddhaFruit()
+
+	local char = player.Character
+	local backpack = player:FindFirstChildOfClass("Backpack")
+
+	if not char or not backpack then
+		return false
+	end
+
+	for _,v in pairs(char:GetChildren()) do
+		if v:IsA("Tool") and string.find(string.lower(v.Name),"buddha") then
+			return true
+		end
+	end
+
+	for _,v in pairs(backpack:GetChildren()) do
+		if v:IsA("Tool") and string.find(string.lower(v.Name),"buddha") then
+			return true
+		end
+	end
+
+	return false
+end
+
+--------------------------------------------------------------------
+-- FIND FRUIT
+--------------------------------------------------------------------
+local function GetFruitTool()
+
+	local char = player.Character
+	local backpack = player:FindFirstChildOfClass("Backpack")
+
+	if not char or not backpack then
+		return nil
+	end
+
+	for _,v in pairs(char:GetChildren()) do
+		if v:IsA("Tool") and (v.ToolTip == "Blox Fruit" or v.Name:find("Fruit")) then
+			return v
+		end
+	end
+
+	for _,v in pairs(backpack:GetChildren()) do
+		if v:IsA("Tool") and (v.ToolTip == "Blox Fruit" or v.Name:find("Fruit")) then
+			return v
+		end
+	end
 
 end
 
@@ -5135,9 +4971,12 @@ local function ActivateBuddhaForm()
 	if not IsBuddhaFruit() then return end
 
 	local char = player.Character
-	local backpack = player.Backpack
+	local backpack = player:FindFirstChildOfClass("Backpack")
 
 	if not char or not backpack then return end
+
+	local hum = char:FindFirstChildOfClass("Humanoid")
+	if not hum then return end
 
 	getgenv().BuddhaTransforming = true
 
@@ -5148,17 +4987,10 @@ local function ActivateBuddhaForm()
 
 	task.wait(0.1)
 
-	local fruit
-
-	for _,v in pairs(backpack:GetChildren()) do
-		if v:IsA("Tool") and (v.ToolTip == "Blox Fruit" or v.Name:find("Fruit")) then
-			fruit = v
-			break
-		end
-	end
+	local fruit = GetFruitTool()
 
 	if fruit then
-		char.Humanoid:EquipTool(fruit)
+		hum:EquipTool(fruit)
 	end
 
 	task.wait(0.3)
@@ -5184,9 +5016,12 @@ local function DeactivateBuddha()
 	if not getgenv().BuddhaActive then return end
 
 	local char = player.Character
-	local backpack = player.Backpack
+	local backpack = player:FindFirstChildOfClass("Backpack")
 
 	if not char or not backpack then return end
+
+	local hum = char:FindFirstChildOfClass("Humanoid")
+	if not hum then return end
 
 	local tool = char:FindFirstChildOfClass("Tool")
 	if tool then
@@ -5195,17 +5030,10 @@ local function DeactivateBuddha()
 
 	task.wait(0.1)
 
-	local fruit
-
-	for _,v in pairs(backpack:GetChildren()) do
-		if v:IsA("Tool") and (v.ToolTip == "Blox Fruit" or v.Name:find("Fruit")) then
-			fruit = v
-			break
-		end
-	end
+	local fruit = GetFruitTool()
 
 	if fruit then
-		char.Humanoid:EquipTool(fruit)
+		hum:EquipTool(fruit)
 	end
 
 	task.wait(0.3)
@@ -5253,6 +5081,7 @@ end)
 player.CharacterAdded:Connect(function(char)
 
 	getgenv().BuddhaActive = false
+	getgenv().BuddhaTransforming = false
 
 	local hum = char:WaitForChild("Humanoid",10)
 
@@ -5311,7 +5140,7 @@ Setting:AddToggle({
 
 	end
 
-}) ]]
+})
 Setting:AddToggle({
 	Name = "Tự tấn công",
 	Description = "",
