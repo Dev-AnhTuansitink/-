@@ -696,7 +696,7 @@ statsSetings = function(I, e)
 -- VARIÁVEIS DE CONTROLE NECESSÁRIAS
 --==================================================
 _B = _B or false
-_G.BringRange = _G.BringRange or 350
+_G.BringRange = _G.BringRange or 300
 _G.SpeedB = _G.SpeedB or 300
 _G.MobM = _G.MobM or 6
 
@@ -1272,8 +1272,8 @@ end);
 -- =======================
 
 -- [[ VARIÁVEIS PARA O SEU INPUT ]] --
-getgenv().TweenSpeedFar = 300   -- Velocidade Padrão (Longe)
-getgenv().TweenSpeedNear = 700  -- Velocidade Boost (Perto <= 15 studs)
+getgenv().TweenSpeedFar = 310   -- Velocidade Padrão (Longe)
+getgenv().TweenSpeedNear = 710  -- Velocidade Boost (Perto <= 15 studs)
 
 _tp = function(I)
 local e = plr.Character;
@@ -2622,10 +2622,17 @@ Discord:AddDiscordInvite({
     Invite = "https://discord.gg/https://discord.gg/DPZ7zqar"
 })
 local credits = Discord:AddParagraph({
-    Title = "version 1.00 [ beta ]",
+    Title = "Phiên Bản 1.10",
     Desc = ""
 })
-credits:SetDesc("NguyenAnhTuan (owner hub)")
+credits:SetDesc("NguyenAnhTuan ( Admin )")
+
+local scripts = Discord:AddParagraph({
+    Title = "Thông tin cập nhật:",
+    Desc = ""
+})
+scripts:SetDesc("Gôm quái mới , sửa 1 vài lỗi trong script!")
+
 
 -- ========================================
 -- FIGHTING SHOP WITH AUTO TWEEN (NOCLIP + STABILIZE)
@@ -2653,7 +2660,7 @@ elseif placeId == 4442272183 or placeId == 79091703265657 then
 elseif placeId == 7449423635 or placeId == 100117331123089 then
     World3 = true
 else
-    plr:Kick("❌ Error Blox Fruits - World not recognized")
+    plr:Kick("❌ ai hỏi?")
 end
 
 -- Xác định SEA dạng số
@@ -2720,18 +2727,20 @@ local function GetHRP()
     return plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
 end
 
--- Noclip: vô hiệu hóa va chạm các bộ phận
+-- Noclip
 local function setNoclip(state)
     _G.noclipEnabled = state
+
     if state then
-        -- Kết nối 1 lần, chạy liên tục
         if not _G.noclipConnection then
             _G.noclipConnection = RunService.Stepped:Connect(function()
-                if _G.noclipEnabled and plr.Character then
-                    for _, part in pairs(plr.Character:GetDescendants()) do
-                        if part:IsA("BasePart") and part.CanCollide then
-                            part.CanCollide = false
-                        end
+                if not _G.noclipEnabled then return end
+                local char = plr.Character
+                if not char then return end
+
+                for _, part in pairs(char:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.CanCollide = false
                     end
                 end
             end)
@@ -2744,22 +2753,29 @@ local function setNoclip(state)
     end
 end
 
--- Giữ người chơi ổn định: PlatformStand + chống rơi
+-- Stabilize
 local function stabilizeCharacter(stabilize)
     local char = plr.Character
     if not char then return end
+
     local humanoid = char:FindFirstChildOfClass("Humanoid")
+
     if humanoid then
         humanoid.PlatformStand = stabilize
         humanoid.AutoRotate = not stabilize
     end
+
     if stabilize then
-        -- Chống rơi: giữ vận tốc Y không âm
-        if _G.stabilizeLoop then _G.stabilizeLoop:Disconnect() end
+        if _G.stabilizeLoop then
+            _G.stabilizeLoop:Disconnect()
+        end
+
         _G.stabilizeLoop = RunService.Heartbeat:Connect(function()
             local hrp = GetHRP()
-            if hrp and hrp.Velocity.Y < -5 then
-                hrp.Velocity = Vector3.new(hrp.Velocity.X, 0, hrp.Velocity.Z)
+            if not hrp then return end
+
+            if hrp.Velocity.Y < -10 then
+                hrp.Velocity = Vector3.new(hrp.Velocity.X,0,hrp.Velocity.Z)
             end
         end)
     else
@@ -2770,51 +2786,95 @@ local function stabilizeCharacter(stabilize)
     end
 end
 
--- Hủy tween hiện tại
+-- Cancel Tween
 local function cancelCurrentTween()
     if _G.currentTween then
-        _G.currentTween:Cancel()
+        pcall(function()
+            _G.currentTween:Cancel()
+        end)
         _G.currentTween = nil
     end
 end
 
--- Tween đến vị trí (tự động bật noclip & stabilize)
+-- Detect skill lock
+local function isCharacterLocked()
+    local hrp = GetHRP()
+    if not hrp then return false end
+
+    for _,v in pairs(hrp:GetChildren()) do
+        if v:IsA("BodyVelocity")
+        or v:IsA("BodyPosition")
+        or v:IsA("BodyGyro")
+        or v:IsA("AlignPosition")
+        or v:IsA("VectorForce") then
+            return true
+        end
+    end
+
+    return false
+end
+
+-- Tween
 local function tweenTo(targetPos)
     local hrp = GetHRP()
     if not hrp then return end
+
     cancelCurrentTween()
 
-    -- Bật noclip và giữ ổn định
     setNoclip(true)
     stabilizeCharacter(true)
 
     local distance = (hrp.Position - targetPos).Magnitude
-    local speed = 300  -- có thể điều chỉnh
+    local speed = 300
     local time = distance / speed
+
+    if time < 0.05 then
+        time = 0.05
+    elseif time > 8 then
+        time = 8
+    end
 
     local tweenInfo = TweenInfo.new(
         time,
         Enum.EasingStyle.Linear,
         Enum.EasingDirection.Out,
-        0, false, 0
+        0,false,0
     )
+
     local goal = {CFrame = CFrame.new(targetPos)}
     _G.currentTween = TweenService:Create(hrp, tweenInfo, goal)
 
-    -- Khi tween hoàn thành hoặc bị hủy, tắt noclip & stabilize
+    local finished = false
+
+    -- Check skill lock loop
+    task.spawn(function()
+        while _G.currentTween and not finished do
+            if isCharacterLocked() then
+                cancelCurrentTween()
+                break
+            end
+            task.wait(0.1)
+        end
+    end)
+
     _G.currentTween.Completed:Connect(function()
+        if finished then return end
+        finished = true
+
         setNoclip(false)
         stabilizeCharacter(false)
+        _G.currentTween = nil
     end)
 
     _G.currentTween:Play()
 end
 
--- Dừng toàn bộ tiến trình mua
+-- Stop
 local function StopBuyMelee()
     cancelCurrentTween()
     setNoclip(false)
     stabilizeCharacter(false)
+
     _G.BuyMeleeActive = false
     _G.BuyMeleeTarget = nil
     _G.BuyMeleeRemote = nil
@@ -2880,7 +2940,7 @@ end
 -- ========================================
 -- CÁC TOGGLE TRONG SHOP
 -- ========================================
-Shop:AddSection("Mua Võ meele )")
+Shop:AddSection("Mua Võ meele")
 
 Shop:AddToggle({
     Title = "Mua Black Leg",
@@ -3617,6 +3677,103 @@ Farm:AddToggle({
         _G.AcceptQuest = v
         _G.SaveData["AcceptQuest_Save"] = v
         SaveSettings()
+    end
+})
+Farm:AddButton({
+    Name = "Hoá Khổng Lồ",
+    Description = "Tăng tầm đánh . Siêu ngon khi ae hoá phật để farm!",
+    Callback = function()
+
+        local p=game.Players.LocalPlayer
+        local rs=game.ReplicatedStorage
+        local Net=rs.Modules.Net
+        local RH,RA=Net["RE/RegisterHit"],Net["RE/RegisterAttack"]
+
+        local SendHit
+        pcall(function()
+            SendHit=getsenv(p.PlayerScripts:WaitForChildOfClass("LocalScript"))._G.SendHitsToServer
+        end)
+
+        local R=999
+        local Parts={"Head","HumanoidRootPart","LeftHand","RightHand","LeftLowerArm","RightLowerArm"}
+
+        local function ngu(v)
+            local h=v:FindFirstChild("Humanoid")
+            local r=v:FindFirstChild("HumanoidRootPart")
+            return h and r and h.Health>0
+        end
+
+        local function trieu()
+            local t,c={},p.Character
+            if not c then return t end
+            local hrp=c:FindFirstChild("HumanoidRootPart")
+            if not hrp then return t end
+            
+            for _,v in pairs(workspace.Enemies:GetChildren()) do
+                if ngu(v) and (v.HumanoidRootPart.Position-hrp.Position).Magnitude<=R then
+                    t[#t+1]=v
+                end
+            end
+            for _,v in pairs(workspace.Characters:GetChildren()) do
+                if v~=c and ngu(v) and (v.HumanoidRootPart.Position-hrp.Position).Magnitude<=R then
+                    t[#t+1]=v
+                end
+            end
+            return t
+        end
+
+        local function hh(v)
+            return v:FindFirstChild(Parts[math.random(#Parts)]) or v.HumanoidRootPart
+        end
+
+        task.spawn(function()
+            while task.wait() do
+                local c=p.Character
+                if not c then continue end
+                
+                local tg=trieu()
+                if #tg==0 then continue end
+                
+                local a={nil,{}}
+                for _,v in pairs(tg) do
+                    local pr=hh(v)
+                    a[1]=a[1] or pr
+                    a[2][#a[2]+1]={v,pr}
+                end
+                
+                RA:FireServer(0)
+                if SendHit then
+                    SendHit(unpack(a))
+                else
+                    RH:FireServer(unpack(a))
+                end
+            end
+        end)
+
+        local S=3
+
+        local function scale(c)
+            for _,v in pairs(c:GetDescendants()) do
+                if v:IsA("BasePart") then
+                    v.Size=v.Size*S
+                elseif v:IsA("SpecialMesh") or v:IsA("Mesh") then
+                    v.Scale=v.Scale*S
+                end
+            end
+        end
+
+        local function apply()
+            local c=workspace.Characters:WaitForChild(p.Name)
+            scale(c)
+        end
+
+        apply()
+
+        p.CharacterAdded:Connect(function()
+            task.wait(1)
+            apply()
+        end)
+
     end
 })
 
@@ -4724,7 +4881,436 @@ Setting:AddButton({
         shouldTween = true
     end
 })
+--------------------------------------------------------------------
+-- SERVICES
+--------------------------------------------------------------------
+local Players = game:GetService("Players")
+local VirtualInputManager = game:GetService("VirtualInputManager")
 
+local player = Players.LocalPlayer
+
+--------------------------------------------------------------------
+-- VARIABLES
+--------------------------------------------------------------------
+getgenv().BuddhaFarm = false
+getgenv().BuddhaActive = false
+getgenv().BuddhaTransforming = false
+
+--------------------------------------------------------------------
+-- CHECK FARM STATE
+--------------------------------------------------------------------
+local function IsAnyFarmRunning()
+
+	return _G.Level
+	or _G.AutoFarm_Bone
+	or _G.AutoFarm_Cake
+	or _G.AutoTyrant
+	or _G.AutoFarmNear
+
+end
+
+--------------------------------------------------------------------
+-- ACTIVATE BUDDHA
+--------------------------------------------------------------------
+local function ActivateBuddhaForm()
+
+	if getgenv().BuddhaActive then return end
+	if getgenv().BuddhaTransforming then return end
+	if not IsBuddhaFruit() then return end
+
+	local char = player.Character
+	local backpack = player.Backpack
+
+	if not char or not backpack then return end
+
+	getgenv().BuddhaTransforming = true
+
+	local tool = char:FindFirstChildOfClass("Tool")
+	if tool then
+		tool.Parent = backpack
+	end
+
+	task.wait(0.1)
+
+	local fruit
+
+	for _,v in pairs(backpack:GetChildren()) do
+		if v:IsA("Tool") and (v.ToolTip == "Blox Fruit" or v.Name:find("Fruit")) then
+			fruit = v
+			break
+		end
+	end
+
+	if fruit then
+		char.Humanoid:EquipTool(fruit)
+	end
+
+	task.wait(0.3)
+
+	VirtualInputManager:SendKeyEvent(true,"Z",false,game)
+	task.wait(0.05)
+	VirtualInputManager:SendKeyEvent(false,"Z",false,game)
+
+	task.wait(0.5)
+
+	getgenv().BuddhaActive = true
+	getgenv().BuddhaTransforming = false
+
+	print("Buddha Activated")
+
+end
+
+--------------------------------------------------------------------
+-- DEACTIVATE BUDDHA
+--------------------------------------------------------------------
+local function DeactivateBuddha()
+
+	if not getgenv().BuddhaActive then return end
+
+	local char = player.Character
+	local backpack = player.Backpack
+
+	if not char or not backpack then return end
+
+	local tool = char:FindFirstChildOfClass("Tool")
+	if tool then
+		tool.Parent = backpack
+	end
+
+	task.wait(0.1)
+
+	local fruit
+
+	for _,v in pairs(backpack:GetChildren()) do
+		if v:IsA("Tool") and (v.ToolTip == "Blox Fruit" or v.Name:find("Fruit")) then
+			fruit = v
+			break
+		end
+	end
+
+	if fruit then
+		char.Humanoid:EquipTool(fruit)
+	end
+
+	task.wait(0.3)
+
+	VirtualInputManager:SendKeyEvent(true,"Z",false,game)
+	task.wait(0.05)
+	VirtualInputManager:SendKeyEvent(false,"Z",false,game)
+
+	getgenv().BuddhaActive = false
+
+	print("Buddha Deactivated")
+
+end
+
+--------------------------------------------------------------------
+-- AUTO BUDDHA LOOP
+--------------------------------------------------------------------
+task.spawn(function()
+
+	while task.wait(0.5) do
+
+		if not getgenv().BuddhaFarm then
+			continue
+		end
+
+		if not IsAnyFarmRunning() then
+			continue
+		end
+
+		if getgenv().BuddhaTransforming then
+			continue
+		end
+
+		if not getgenv().BuddhaActive then
+			ActivateBuddhaForm()
+		end
+
+	end
+
+end)
+
+--------------------------------------------------------------------
+-- RESPAWN HANDLER
+--------------------------------------------------------------------
+player.CharacterAdded:Connect(function(char)
+
+	getgenv().BuddhaActive = false
+
+	local hum = char:WaitForChild("Humanoid",10)
+
+	if hum then
+		hum.Died:Connect(function()
+
+			if getgenv().BuddhaFarm and IsAnyFarmRunning() then
+				getgenv().BuddhaTransforming = true
+				getgenv().BuddhaActive = false
+				print("Player died - waiting respawn")
+			end
+
+		end)
+	end
+
+	task.wait(1)
+
+	if getgenv().BuddhaFarm and IsAnyFarmRunning() then
+		ActivateBuddhaForm()
+	end
+
+end)
+
+--------------------------------------------------------------------
+-- UI TOGGLE
+--------------------------------------------------------------------
+Farm:AddToggle({
+
+	Name = "Farm với trái phật",
+	Description = "tự hoá z phật khi farm",
+	Default = false,
+
+	Callback = function(v)
+
+		getgenv().BuddhaFarm = v
+
+		if v then
+
+			print("Buddha Farm Enabled")
+
+			if IsAnyFarmRunning() then
+				task.spawn(function()
+					ActivateBuddhaForm()
+				end)
+			end
+
+		else
+
+			print("Buddha Farm Disabled")
+
+			task.spawn(function()
+				DeactivateBuddha()
+			end)
+
+		end
+
+	end
+
+})
+--------------------------------------------------------------------
+-- SERVICES
+--------------------------------------------------------------------
+local Players = game:GetService("Players")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+
+local player = Players.LocalPlayer
+
+--------------------------------------------------------------------
+-- VARIABLES
+--------------------------------------------------------------------
+getgenv().BuddhaFarm = false
+getgenv().BuddhaActive = false
+getgenv().BuddhaTransforming = false
+
+--------------------------------------------------------------------
+-- CHECK FARM STATE
+--------------------------------------------------------------------
+local function IsAnyFarmRunning()
+
+	return _G.Level
+	or _G.AutoFarm_Bone
+	or _G.AutoFarm_Cake
+	or _G.AutoTyrant
+	or _G.AutoFarmNear
+
+end
+
+--------------------------------------------------------------------
+-- ACTIVATE BUDDHA
+--------------------------------------------------------------------
+local function ActivateBuddhaForm()
+
+	if getgenv().BuddhaActive then return end
+	if getgenv().BuddhaTransforming then return end
+	if not IsBuddhaFruit() then return end
+
+	local char = player.Character
+	local backpack = player.Backpack
+
+	if not char or not backpack then return end
+
+	getgenv().BuddhaTransforming = true
+
+	local tool = char:FindFirstChildOfClass("Tool")
+	if tool then
+		tool.Parent = backpack
+	end
+
+	task.wait(0.1)
+
+	local fruit
+
+	for _,v in pairs(backpack:GetChildren()) do
+		if v:IsA("Tool") and (v.ToolTip == "Blox Fruit" or v.Name:find("Fruit")) then
+			fruit = v
+			break
+		end
+	end
+
+	if fruit then
+		char.Humanoid:EquipTool(fruit)
+	end
+
+	task.wait(0.3)
+
+	VirtualInputManager:SendKeyEvent(true,"Z",false,game)
+	task.wait(0.05)
+	VirtualInputManager:SendKeyEvent(false,"Z",false,game)
+
+	task.wait(0.5)
+
+	getgenv().BuddhaActive = true
+	getgenv().BuddhaTransforming = false
+
+	print("Buddha Activated")
+
+end
+
+--------------------------------------------------------------------
+-- DEACTIVATE BUDDHA
+--------------------------------------------------------------------
+local function DeactivateBuddha()
+
+	if not getgenv().BuddhaActive then return end
+
+	local char = player.Character
+	local backpack = player.Backpack
+
+	if not char or not backpack then return end
+
+	local tool = char:FindFirstChildOfClass("Tool")
+	if tool then
+		tool.Parent = backpack
+	end
+
+	task.wait(0.1)
+
+	local fruit
+
+	for _,v in pairs(backpack:GetChildren()) do
+		if v:IsA("Tool") and (v.ToolTip == "Blox Fruit" or v.Name:find("Fruit")) then
+			fruit = v
+			break
+		end
+	end
+
+	if fruit then
+		char.Humanoid:EquipTool(fruit)
+	end
+
+	task.wait(0.3)
+
+	VirtualInputManager:SendKeyEvent(true,"Z",false,game)
+	task.wait(0.05)
+	VirtualInputManager:SendKeyEvent(false,"Z",false,game)
+
+	getgenv().BuddhaActive = false
+
+	print("Buddha Deactivated")
+
+end
+
+--------------------------------------------------------------------
+-- AUTO BUDDHA LOOP
+--------------------------------------------------------------------
+task.spawn(function()
+
+	while task.wait(0.5) do
+
+		if not getgenv().BuddhaFarm then
+			continue
+		end
+
+		if not IsAnyFarmRunning() then
+			continue
+		end
+
+		if getgenv().BuddhaTransforming then
+			continue
+		end
+
+		if not getgenv().BuddhaActive then
+			ActivateBuddhaForm()
+		end
+
+	end
+
+end)
+
+--------------------------------------------------------------------
+-- RESPAWN HANDLER
+--------------------------------------------------------------------
+player.CharacterAdded:Connect(function(char)
+
+	getgenv().BuddhaActive = false
+
+	local hum = char:WaitForChild("Humanoid",10)
+
+	if hum then
+		hum.Died:Connect(function()
+
+			if getgenv().BuddhaFarm and IsAnyFarmRunning() then
+				getgenv().BuddhaTransforming = true
+				getgenv().BuddhaActive = false
+				print("Player died - waiting respawn")
+			end
+
+		end)
+	end
+
+	task.wait(1)
+
+	if getgenv().BuddhaFarm and IsAnyFarmRunning() then
+		ActivateBuddhaForm()
+	end
+
+end)
+
+--------------------------------------------------------------------
+-- UI TOGGLE
+--------------------------------------------------------------------
+Setting:AddToggle({
+
+	Name = "Farm với trái phật",
+	Description = "tự hoá z phật khi farm",
+	Default = false,
+
+	Callback = function(v)
+
+		getgenv().BuddhaFarm = v
+
+		if v then
+
+			print("Buddha Farm Enabled")
+
+			if IsAnyFarmRunning() then
+				task.spawn(function()
+					ActivateBuddhaForm()
+				end)
+			end
+
+		else
+
+			print("Buddha Farm Disabled")
+
+			task.spawn(function()
+				DeactivateBuddha()
+			end)
+
+		end
+
+	end
+
+})
 Setting:AddToggle({
 	Name = "Tự tấn công",
 	Description = "",
