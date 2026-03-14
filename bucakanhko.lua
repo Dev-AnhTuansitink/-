@@ -2724,6 +2724,12 @@ local NPCS = {
 -- ========================================
 
 -- Lấy HumanoidRootPart
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local Players = game:GetService("Players")
+
+local plr = Players.LocalPlayer
+
 local function GetHRP()
     return plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
 end
@@ -2739,7 +2745,7 @@ local function setNoclip(state)
                 local char = plr.Character
                 if not char then return end
 
-                for _, part in pairs(char:GetDescendants()) do
+                for _,part in pairs(char:GetDescendants()) do
                     if part:IsA("BasePart") then
                         part.CanCollide = false
                     end
@@ -2756,6 +2762,7 @@ end
 
 -- Stabilize
 local function stabilizeCharacter(stabilize)
+
     local char = plr.Character
     if not char then return end
 
@@ -2767,56 +2774,72 @@ local function stabilizeCharacter(stabilize)
     end
 
     if stabilize then
+
         if _G.stabilizeLoop then
             _G.stabilizeLoop:Disconnect()
         end
 
         _G.stabilizeLoop = RunService.Heartbeat:Connect(function()
+
             local hrp = GetHRP()
             if not hrp then return end
 
             if hrp.Velocity.Y < -10 then
                 hrp.Velocity = Vector3.new(hrp.Velocity.X,0,hrp.Velocity.Z)
             end
+
         end)
+
     else
+
         if _G.stabilizeLoop then
             _G.stabilizeLoop:Disconnect()
             _G.stabilizeLoop = nil
         end
+
     end
+
 end
 
 -- Cancel Tween
 local function cancelCurrentTween()
+
     if _G.currentTween then
         pcall(function()
             _G.currentTween:Cancel()
         end)
         _G.currentTween = nil
     end
+
 end
 
 -- Detect skill lock
 local function isCharacterLocked()
+
     local hrp = GetHRP()
     if not hrp then return false end
 
     for _,v in pairs(hrp:GetChildren()) do
+
         if v:IsA("BodyVelocity")
         or v:IsA("BodyPosition")
         or v:IsA("BodyGyro")
         or v:IsA("AlignPosition")
         or v:IsA("VectorForce") then
+
             return true
+
         end
+
     end
 
     return false
+
 end
 
--- Tween
+-- Tween VIP
 local function tweenTo(targetPos)
+
     local hrp = GetHRP()
     if not hrp then return end
 
@@ -2825,53 +2848,66 @@ local function tweenTo(targetPos)
     setNoclip(true)
     stabilizeCharacter(true)
 
-    local distance = (hrp.Position - targetPos).Magnitude
-    local speed = 200
-    local time = distance / speed
+    local speed = 260
+    local stepSize = 80
+    local heightOffset = 2
 
-    if time < 0.05 then
-        time = 0.05
-    elseif time > 8 then
-        time = 8
-    end
-
-    local tweenInfo = TweenInfo.new(
-        time,
-        Enum.EasingStyle.Linear,
-        Enum.EasingDirection.Out,
-        0,false,0
-    )
-
-    local goal = {CFrame = CFrame.new(targetPos)}
-    _G.currentTween = TweenService:Create(hrp, tweenInfo, goal)
-
-    local finished = false
-
-    -- Check skill lock loop
     task.spawn(function()
-        while _G.currentTween and not finished do
+
+        while true do
+
+            local hrp = GetHRP()
+            if not hrp then break end
+
             if isCharacterLocked() then
                 cancelCurrentTween()
                 break
             end
-            task.wait(0.1)
+
+            local currentPos = hrp.Position
+            local distance = (targetPos - currentPos).Magnitude
+
+            if distance < 6 then
+                break
+            end
+
+            local step = math.min(stepSize, distance)
+
+            local direction = (targetPos - currentPos).Unit
+            local nextPos = currentPos + direction * step
+
+            nextPos = Vector3.new(nextPos.X, nextPos.Y + heightOffset, nextPos.Z)
+
+            local time = step / speed
+
+            local tweenInfo = TweenInfo.new(
+                time,
+                Enum.EasingStyle.Linear,
+                Enum.EasingDirection.Out
+            )
+
+            local goal = {CFrame = CFrame.new(nextPos)}
+
+            _G.currentTween = TweenService:Create(hrp, tweenInfo, goal)
+
+            _G.currentTween:Play()
+            _G.currentTween.Completed:Wait()
+
+            task.wait(0.02)
+
         end
-    end)
 
-    _G.currentTween.Completed:Connect(function()
-        if finished then return end
-        finished = true
-
+        cancelCurrentTween()
         setNoclip(false)
         stabilizeCharacter(false)
-        _G.currentTween = nil
+
     end)
 
-    _G.currentTween:Play()
 end
 
--- Stop
+-- Stop Buy
 local function StopBuyMelee()
+
     cancelCurrentTween()
     setNoclip(false)
     stabilizeCharacter(false)
@@ -2880,8 +2916,8 @@ local function StopBuyMelee()
     _G.BuyMeleeTarget = nil
     _G.BuyMeleeRemote = nil
     _G.BuyMeleeStyle = nil
-end
 
+end
 -- ========================================
 -- HÀM MUA CHÍNH (AUTO TWEEN)
 -- ========================================
@@ -2906,7 +2942,7 @@ local function BuyMeleeWithTween(styleKey, remoteName, extraArgs)
             local hrp = GetHRP()
             if hrp then
                 local dist = (hrp.Position - targetPos).Magnitude
-                if dist <= 20 then
+                if dist <= 10 then
                     -- Đã đến nơi, dừng tween và thử mua
                     cancelCurrentTween()
                     setNoclip(false)
