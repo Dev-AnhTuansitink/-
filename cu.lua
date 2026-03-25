@@ -6268,7 +6268,7 @@ Section24:AddToggle("Toggle_BypassQuest", {
 })
 local Section25 = Event:AddRightGroupbox("Biển")
 -- Chọn Thuyền
-Section25:AddDropdown("Dropdown1", {
+Section25:AddDropdown("Thuyenchon", {
     Title = "Chọn Thuyền",
     Values = {
         "Guardian",
@@ -6288,7 +6288,7 @@ Section25:AddDropdown("Dropdown1", {
 })
 
 -- Chọn level biển
-Section25:AddDropdown("Dropdown2", {
+Section25:AddDropdown("lvsea", {
     Title = "Chọn level biển",
     Values = {
         "Lv 1", "Lv 2", "Lv 3", "Lv 4", "Lv 5", "Lv 6", "Lv Infinite"
@@ -6299,7 +6299,7 @@ Section25:AddDropdown("Dropdown2", {
         _G.DangerSc = Value
     end
 })
-Section25:AddToggle("Toggle1", {
+Section25:AddToggle("skbien", {
     Title = "Auto bắt đầu sea event",
     Default = false,
     Callback = function(Value)
@@ -6373,7 +6373,7 @@ spawn(function()
 end);
 _G.SetSpeedBoat = 300
 
-Section25:AddToggle("Toggle2", {
+Section25:AddToggle("tocdotau", {
     Title = "Kích hoạt tốc độ thuyền",
     Default = false,
     Callback = function(Value)
@@ -11521,7 +11521,7 @@ local Chips = {
     "Dough"
 }
 
-Section58:AddDropdown("Dropdown1", {
+Section58:AddDropdown("chỉpaid", {
     Title = "Chọn Chip",
     Values = Chips,
     Default = "Flame",
@@ -11789,7 +11789,7 @@ for _, data in pairs(replicated.Remotes.CommF_:InvokeServer("GetFruits", false))
 end
 
 -- Tạo dropdown chọn trái stock
-Section60:AddDropdown("Dropdown1", {
+Section60:AddDropdown("Muastockbth", {
     Title = "Chọn trái stock",
     Values = StockFruits,
     Default = StockFruits[1] or "",
@@ -11813,7 +11813,7 @@ Section60:AddButton({
 -- M5: danh sách trái stock
 
 -- Dropdown chọn trái đảo kì bí
-Section60:AddDropdown("Dropdown2", {
+Section60:AddDropdown("Muastockkibi", {
     Title = "Chọn trái đảo kì bí",
     Values = J5,
     Default = J5[1] or "",
