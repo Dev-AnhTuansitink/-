@@ -8059,7 +8059,7 @@ end)
 
 local Section38 = Race:AddRightGroupbox("Tộc v4")
 
---[[local K5 = Section38:AddLabel("Trạng thái v4: ")
+local K5 = Section38:AddLabel("Trạng thái v4: ")
 
 local lastStatus = ""
 spawn(function()
@@ -10457,7 +10457,7 @@ spawn(function()
 end)
 
 local Section52 = Get:AddRightGroupbox("Song Kiếm Bị Nguyền Rủa")
---[[ local CursedQuestLabel = Section52:AddLabel("Nhiệm vụ song kiếm bị nguyền rủa: ")
+ local CursedQuestLabel = Section52:AddLabel("Nhiệm vụ song kiếm bị nguyền rủa: ")
 
 local lastQuestStatus = ""
 
@@ -11505,6 +11505,7 @@ spawn(function()
         end
     end
 end)
+--[[
 local Section58 = Fruit:AddRightGroupbox("Raid")
 local Chips = {
     "Flame",
@@ -11945,7 +11946,7 @@ spawn(function()
         end
     end
 end)
-
+--]]
 local FastAttackModule = {}
 
 local Players = game:GetService("Players")
