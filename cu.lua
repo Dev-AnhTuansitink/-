@@ -9536,7 +9536,7 @@ task.spawn(function()
         end)
     end
 end)
-
+--[[
 local Section43 = Player:AddRightGroupbox("aimbot , pvp")
 
 local Players = game:GetService("Players")
@@ -9895,7 +9895,7 @@ spawn(function()
 		end;
 	end;
 end);
---[[
+
 local Section46 = Teleport:AddRightGroupbox("Dịch chuyển - Thế giới")
 
 Section46:AddButton({
