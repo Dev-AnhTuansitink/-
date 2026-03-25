@@ -9895,7 +9895,7 @@ spawn(function()
 		end;
 	end;
 end);
-
+--[[
 local Section46 = Teleport:AddRightGroupbox("Dịch chuyển - Thế giới")
 
 Section46:AddButton({
@@ -10069,7 +10069,7 @@ spawn(function()
 		end;
 	end;
 end);
---[[
+
 local Section50 = Get:AddRightGroupbox("Súng Skull Guitar")
 
 Section50:AddToggle("AutoSoulGuitar", {
