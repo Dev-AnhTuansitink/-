@@ -11569,8 +11569,8 @@ end);
 Section58:AddToggle("LowFruitsChip", {
     Title = "Mua chip với trái ít beli",
     Default = false,
-    Callback = function(state)
-        _G.AutoBuyChip = state
+    Callback = function(Value)
+        _G.AutoBuyChip = Value
 
         task.spawn(function()
             while _G.AutoBuyChip do
@@ -11609,9 +11609,9 @@ local Section59 = Fruit:AddRightGroupbox("Raid Farming")
 Section59:AddToggle("BatDauRaid", {
     Title = "Auto bắt đầu Raid",
     Default = false,
-    Callback = function(state)
-        _G.Auto_StartRaid = state
-        print("Auto Start Raid:", state)
+    Callback = function(Value)
+        _G.Auto_StartRaid = Value
+        print("Auto Start Raid:", Value)
     end
 })
 spawn(function()
@@ -11655,9 +11655,9 @@ end);
 Section59:AddToggle("FarmRaid", {
     Title = "Auto Hoàn Thành Raid",
     Default = false,
-    Callback = function(I)
-        _G.Raiding = I
-        print("Auto Hoàn Thành Raid:", I)
+    Callback = function(Value)
+        _G.Raiding = Value
+        print("Auto Hoàn Thành Raid:", Value)
     end
 })
 function IsIslandRaid(cu)
