@@ -10069,6 +10069,7 @@ spawn(function()
 		end;
 	end;
 end);
+--[[
 local Section50 = Get:AddRightGroupbox("Súng Skull Guitar")
 
 Section50:AddToggle("AutoSoulGuitar", {
@@ -11505,7 +11506,7 @@ spawn(function()
         end
     end
 end)
---[[
+
 local Section58 = Fruit:AddRightGroupbox("Raid")
 local Chips = {
     "Flame",
