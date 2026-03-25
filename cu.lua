@@ -8059,7 +8059,7 @@ end)
 
 local Section38 = Race:AddRightGroupbox("Tộc v4")
 
-local K5 = Section38:AddLabel("Trạng thái v4: ")
+--[[local K5 = Section38:AddLabel("Trạng thái v4: ")
 
 local lastStatus = ""
 spawn(function()
@@ -8075,7 +8075,7 @@ spawn(function()
         end
     end)
 end)
-
+]]--
 Section38:AddToggle("Auto_LookMoon", {
     Title = "Auto Nhìn Trăng",
     Default = false,
@@ -10457,7 +10457,7 @@ spawn(function()
 end)
 
 local Section52 = Get:AddRightGroupbox("Song Kiếm Bị Nguyền Rủa")
-local CursedQuestLabel = Section52:AddLabel("Nhiệm vụ song kiếm bị nguyền rủa: ")
+--[[ local CursedQuestLabel = Section52:AddLabel("Nhiệm vụ song kiếm bị nguyền rủa: ")
 
 local lastQuestStatus = ""
 
@@ -10491,6 +10491,7 @@ spawn(function()
         end
     end)
 end)
+--]]
 Section52:AddToggle("AutoCDK", {
     Title = "Auto Lấy CDK [ Nhiệm vụ cuối cùng ]",
     -- = "",
